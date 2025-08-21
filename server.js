@@ -32,12 +32,12 @@ app.use(morgan('combined'));
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'http://localhost:8080', 
-    'http://127.0.0.1:5500',
-    'file://',
-    'null',
-    'https://surfai-backend.vercel.app',  // ← AJOUTEZ CETTE LIGNE
-    'https://*.vercel.app'                // ← ET CELLE-CI
+    'http://localhost:8080',
+    'http://127.0.0.1:5500', // Live Server VS Code
+    'file://', // Pour les tests locaux HTML
+    'null', // Pour les fichiers HTML ouverts directement
+    'https://surfai-backend.vercel.app', // ← FRONTEND VERCEL
+    'https://*.vercel.app' // ← TOUS LES DOMAINES VERCEL
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
