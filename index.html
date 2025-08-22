@@ -863,39 +863,43 @@
         }
 
         // Appel API backend avec gestion d'erreurs
-        async function backendRequest(endpoint, options = {}) {
-            const url = `${backendUrl}${endpoint}`;
-            const headers = {
-                'Content-Type': 'application/json',
-                ...options.headers
-            };
-            
-            // Ajouter clé API si configurée
-            if (backendApiKey && options.requireAuth) {
-                headers['X-API-Key'] = backendApiKey;
-            }
-            
-            const requestOptions = {
-                ...options,
-                headers
-            };
-            
-            console.log(`🔗 Appel backend: ${url}`);
-            
-            try {
-                const response = await fetch(url, requestOptions);
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.message || `Erreur ${response.status}`);
-                }
-                
-                return data;
-            } catch (error) {
-                console.error(`❌ Erreur appel backend ${endpoint}:`, error);
-                throw error;
-            }
+async function backendRequest(endpoint, options = {}) {
+    const url = `${backendUrl}${endpoint}`;
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+    
+    // Ajouter clé API si configurée
+    if (backendApiKey && options.requireAuth) {
+        headers['X-API-Key'] = backendApiKey;
+    }
+    
+    const requestOptions = {
+        method: 'GET',
+        mode: 'cors',
+        cache: 'no-cache',
+        credentials: 'omit',
+        ...options,
+        headers
+    };
+    
+    console.log(`🔗 Appel backend: ${url}`);
+    
+    try {
+        const response = await fetch(url, requestOptions);
+        
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
         }
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error(`❌ Erreur appel backend ${endpoint}:`, error);
+        throw error;
+    }
+}
 
         // ========================================
         // PRÉVISIONS INTELLIGENTES
