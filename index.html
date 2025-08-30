@@ -426,16 +426,41 @@
                             <label>Date de la session</label>
                             <input type="date" id="session-date" required>
                         </div>
+                        
+                        <!-- Navigation hiérarchique des spots -->
+                        <div class="form-group">
+                            <label>Pays</label>
+                            <select id="session-country" onchange="updateRegions()" required>
+                                <option value="">Sélectionnez un pays</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Région</label>
+                            <select id="session-region" onchange="updateCities()" required>
+                                <option value="">Sélectionnez une région</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ville</label>
+                            <select id="session-city" onchange="updateSpots()" required>
+                                <option value="">Sélectionnez une ville</option>
+                            </select>
+                        </div>
                         <div class="form-group">
                             <label>Spot</label>
                             <select id="session-spot" required>
                                 <option value="">Sélectionnez un spot</option>
-                                <option value="Biarritz Grande Plage">Biarritz Grande Plage</option>
-                                <option value="Hossegor">Hossegor</option>
-                                <option value="Anglet">Anglet</option>
-                                <option value="Hendaye">Hendaye</option>
                             </select>
                         </div>
+                        
+                        <!-- Sélection board depuis profil -->
+                        <div class="form-group">
+                            <label>Board utilisée (optionnel)</label>
+                            <select id="session-board">
+                                <option value="">Aucune board sélectionnée</option>
+                            </select>
+                        </div>
+                        
                         <div class="form-group">
                             <label>Note de la session (1-10)</label>
                             <select id="session-rating" required>
@@ -472,6 +497,31 @@
             <div id="spots" class="tab-panel">
                 <h2>📍 Mes Spots</h2>
                 
+                <!-- Navigation hiérarchique -->
+                <div class="card">
+                    <h3>🗺️ Explorer les spots</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label>Pays</label>
+                            <select id="spots-country" onchange="updateSpotsNavigation()">
+                                <option value="">Tous les pays</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Région</label>
+                            <select id="spots-region" onchange="updateSpotsNavigation()">
+                                <option value="">Toutes les régions</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ville</label>
+                            <select id="spots-city" onchange="updateSpotsNavigation()">
+                                <option value="">Toutes les villes</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="card">
                     <h3>⭐ Spots favoris</h3>
                     <div id="favorite-spots-list">
@@ -480,7 +530,7 @@
                 </div>
                 
                 <div class="card">
-                    <h3>🌊 Tous les spots disponibles</h3>
+                    <h3>🌊 Spots disponibles</h3>
                     <div id="all-spots-list">
                         <div class="loading">Chargement des spots...</div>
                     </div>
@@ -620,15 +670,32 @@
                 <div class="card">
                     <h3>📡 Prévisions en temps réel</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <!-- Navigation spots hiérarchique pour météo -->
                         <div class="form-group">
-                            <label>Choisir un spot</label>
-                            <select id="forecast-spot">
-                                <option value="">Sélectionnez un spot</option>
-                                <option value="biarritz">🏄‍♂️ Biarritz</option>
-                                <option value="hossegor">🌊 Hossegor</option>
-                                <option value="mimizan">🏖️ Mimizan</option>
+                            <label>Pays</label>
+                            <select id="forecast-country" onchange="updateForecastRegions()">
+                                <option value="">Sélectionnez un pays</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label>Région</label>
+                            <select id="forecast-region" onchange="updateForecastCities()">
+                                <option value="">Sélectionnez une région</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ville</label>
+                            <select id="forecast-city" onchange="updateForecastSpots()">
+                                <option value="">Sélectionnez une ville</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Spot</label>
+                            <select id="forecast-spot">
+                                <option value="">Sélectionnez un spot</option>
+                            </select>
+                        </div>
+                        
                         <div class="form-group">
                             <label>Votre niveau</label>
                             <select id="forecast-level">
@@ -639,11 +706,9 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Nombre de jours</label>
-                            <select id="forecast-days">
-                                <option value="1">1 jour</option>
-                                <option value="2" selected>2 jours</option>
-                                <option value="3">3 jours</option>
+                            <label>Board (optionnel)</label>
+                            <select id="forecast-board">
+                                <option value="">Aucune board</option>
                             </select>
                         </div>
                     </div>
@@ -672,10 +737,24 @@
                 </div>
                 
                 <div class="card">
+                    <h3>🗄️ Configuration Supabase</h3>
+                    <div class="form-group">
+                        <label>URL Supabase</label>
+                        <input type="text" id="supabase-url" placeholder="https://votre-projet.supabase.co">
+                    </div>
+                    <div class="form-group">
+                        <label>Clé Anon Supabase</label>
+                        <input type="password" id="supabase-key" placeholder="votre-cle-anon">
+                    </div>
+                    <button class="button" onclick="testSupabaseConnection()">🔍 Tester connexion Supabase</button>
+                </div>
+                
+                <div class="card">
                     <h3>📊 État de l'application</h3>
                     <div id="app-status">
                         <p>🔴 Backend: Non testé</p>
                         <p>🔴 IA Engine: Non vérifié</p>
+                        <p>🔴 Supabase: Non configuré</p>
                         <p>🔴 Données: Non chargées</p>
                     </div>
                 </div>
@@ -683,10 +762,440 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Variables globales
+        // ========================================
+        // GESTIONNAIRE CENTRALISÉ DE DONNÉES SURFAI
+        // ========================================
+
+        class SurfAIDataManager {
+            constructor(backendUrl, supabaseClient = null) {
+                this.backendUrl = backendUrl;
+                this.supabase = supabaseClient;
+                this.cache = {
+                    weatherData: new Map(),
+                    aiPreferences: null,
+                    userProfile: null,
+                    spots: null,
+                    boards: null,
+                    lastUpdate: new Map()
+                };
+                this.subscribers = new Map();
+                this.weatherCacheTimeout = 30 * 60 * 1000; // 30 min
+                this.staticCacheTimeout = 24 * 60 * 60 * 1000; // 24h
+                this.currentUserId = 'demo_user';
+            }
+
+            // GESTION SPOTS
+            async getSpots() {
+                if (this.cache.spots && this.isCacheValid('spots', this.staticCacheTimeout)) {
+                    return this.cache.spots;
+                }
+
+                if (this.supabase) {
+                    try {
+                        const { data: spots, error } = await this.supabase
+                            .from('spots')
+                            .select('*')
+                            .order('country, region, city, name');
+
+                        if (error) throw error;
+                        const hierarchy = this.buildSpotHierarchy(spots);
+                        this.cache.spots = hierarchy;
+                        this.cache.lastUpdate.set('spots', Date.now());
+                        return hierarchy;
+                    } catch (error) {
+                        console.warn('Erreur Supabase spots, fallback:', error);
+                    }
+                }
+
+                // Fallback spots par défaut
+                const defaultSpots = this.getFallbackSpots();
+                this.cache.spots = defaultSpots;
+                return defaultSpots;
+            }
+
+            buildSpotHierarchy(spots) {
+                const hierarchy = {};
+                spots.forEach(spot => {
+                    if (!hierarchy[spot.country]) hierarchy[spot.country] = {};
+                    if (!hierarchy[spot.country][spot.region]) hierarchy[spot.country][spot.region] = {};
+                    if (!hierarchy[spot.country][spot.region][spot.city]) hierarchy[spot.country][spot.region][spot.city] = [];
+                    
+                    hierarchy[spot.country][spot.region][spot.city].push({
+                        id: spot.id,
+                        name: spot.name,
+                        coords: spot.coordinates,
+                        type: spot.type,
+                        difficulty: spot.difficulty
+                    });
+                });
+                return hierarchy;
+            }
+
+            async getSpotsByLevel(country = null, region = null, city = null) {
+                const hierarchy = await this.getSpots();
+                if (!country) return Object.keys(hierarchy);
+                if (!region) return Object.keys(hierarchy[country] || {});
+                if (!city) return Object.keys(hierarchy[country]?.[region] || {});
+                return hierarchy[country]?.[region]?.[city] || [];
+            }
+
+            async findSpotById(spotId) {
+                const hierarchy = await this.getSpots();
+                for (const country of Object.values(hierarchy)) {
+                    for (const region of Object.values(country)) {
+                        for (const city of Object.values(region)) {
+                            const spot = city.find(s => s.id === spotId);
+                            if (spot) return spot;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            // GESTION MÉTÉO
+            async getWeatherData(spotId, forceRefresh = false) {
+                const cacheKey = `weather_${spotId}`;
+                
+                if (!forceRefresh && this.cache.weatherData.has(spotId)) {
+                    const cached = this.cache.weatherData.get(spotId);
+                    if (this.isCacheValid(cacheKey, this.weatherCacheTimeout)) {
+                        return cached;
+                    }
+                }
+
+                try {
+                    const spot = await this.findSpotById(spotId);
+                    const spotName = spot ? spot.name : spotId;
+                    
+                    const weatherData = await this.fetchFromBackend(`/api/v1/sessions/weather/auto?spot=${spotName}`);
+                    
+                    if (weatherData.success) {
+                        const processedData = this.processWeatherData(weatherData.weather, spot);
+                        this.cache.weatherData.set(spotId, processedData);
+                        this.cache.lastUpdate.set(cacheKey, Date.now());
+                        
+                        if (this.supabase) {
+                            await this.cacheWeatherInSupabase(spotId, processedData);
+                        }
+                        
+                        return processedData;
+                    }
+                } catch (error) {
+                    console.warn('Backend météo indisponible:', error);
+                }
+
+                return this.getDefaultWeatherData();
+            }
+
+            async cacheWeatherInSupabase(spotId, weatherData) {
+                if (!this.supabase) return;
+                try {
+                    await this.supabase
+                        .from('weather_cache')
+                        .upsert({
+                            spot_id: spotId,
+                            timestamp: new Date(),
+                            wave_height: weatherData.waveHeight,
+                            wave_period: weatherData.wavePeriod,
+                            wind_speed: weatherData.windSpeed,
+                            wind_direction: weatherData.windDirection,
+                            tide: weatherData.tide,
+                            water_temp: weatherData.waterTemp,
+                            confidence: weatherData.confidence
+                        });
+                } catch (error) {
+                    console.warn('Erreur cache météo Supabase:', error);
+                }
+            }
+
+            // GESTION PROFIL & BOARDS
+            async getUserProfile(userId) {
+                if (this.cache.userProfile && this.isCacheValid('profile', this.staticCacheTimeout)) {
+                    return this.cache.userProfile;
+                }
+
+                if (this.supabase) {
+                    try {
+                        const { data: profile, error } = await this.supabase
+                            .from('user_profiles')
+                            .select('*')
+                            .eq('user_id', userId)
+                            .single();
+
+                        if (error && error.code !== 'PGRST116') throw error;
+                        this.cache.userProfile = profile || this.getDefaultProfile();
+                        this.cache.lastUpdate.set('profile', Date.now());
+                        return this.cache.userProfile;
+                    } catch (error) {
+                        console.warn('Erreur profil Supabase:', error);
+                    }
+                }
+
+                return this.getDefaultProfile();
+            }
+
+            async getUserBoards(userId) {
+                if (this.cache.boards && this.isCacheValid('boards', this.staticCacheTimeout)) {
+                    return this.cache.boards;
+                }
+
+                if (this.supabase) {
+                    try {
+                        const { data: boards, error } = await this.supabase
+                            .from('user_boards')
+                            .select('*')
+                            .eq('user_id', userId)
+                            .order('created_at', { ascending: false });
+
+                        if (error) throw error;
+                        this.cache.boards = boards || [];
+                        this.cache.lastUpdate.set('boards', Date.now());
+                        return this.cache.boards;
+                    } catch (error) {
+                        console.warn('Erreur boards Supabase:', error);
+                    }
+                }
+
+                // Fallback localStorage
+                const localBoards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
+                this.cache.boards = localBoards;
+                return localBoards;
+            }
+
+            async saveUserBoard(userId, board) {
+                if (this.supabase) {
+                    try {
+                        const { data, error } = await this.supabase
+                            .from('user_boards')
+                            .insert([{
+                                user_id: userId,
+                                name: board.name,
+                                size: board.size,
+                                type: board.type,
+                                shaper: board.shaper
+                            }])
+                            .select();
+
+                        if (error) throw error;
+                        this.cache.boards = null;
+                        return data;
+                    } catch (error) {
+                        console.warn('Erreur sauvegarde board Supabase:', error);
+                    }
+                }
+
+                // Fallback localStorage
+                const boards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
+                const newBoard = { ...board, id: Date.now() };
+                boards.push(newBoard);
+                localStorage.setItem('surfai_boards', JSON.stringify(boards));
+                this.cache.boards = null;
+                return [newBoard];
+            }
+
+            // PRÉDICTIONS PERSONNALISÉES
+            async getPersonalizedPrediction(userId, spotId, boardId = null) {
+                try {
+                    const [weatherData, aiPreferences, profile, boards] = await Promise.all([
+                        this.getWeatherData(spotId),
+                        this.getAIPreferences(userId),
+                        this.getUserProfile(userId),
+                        this.getUserBoards(userId)
+                    ]);
+
+                    const selectedBoard = boardId ? boards.find(b => b.id == boardId) : null;
+                    const score = this.calculatePersonalizedScore(weatherData, aiPreferences, profile, selectedBoard);
+
+                    return {
+                        spotId,
+                        boardId,
+                        weather: weatherData,
+                        score: score,
+                        recommendation: this.generateRecommendation(score, weatherData, profile),
+                        timestamp: new Date().toISOString()
+                    };
+                } catch (error) {
+                    console.error('Erreur prédiction personnalisée:', error);
+                    throw error;
+                }
+            }
+
+            calculatePersonalizedScore(weather, aiPrefs, profile, board) {
+                let score = 5.0;
+                
+                // Facteur conditions météo (40%)
+                if (aiPrefs && aiPrefs.wavePreferences) {
+                    const waveOptimal = aiPrefs.wavePreferences.optimalHeight.value;
+                    const waveDiff = Math.abs(weather.waveHeight - waveOptimal);
+                    score -= waveDiff * 1.5;
+                }
+                
+                if (aiPrefs && aiPrefs.windPreferences) {
+                    const windOptimal = aiPrefs.windPreferences.optimalSpeed.value;
+                    const windDiff = Math.abs(weather.windSpeed - windOptimal);
+                    score -= windDiff * 0.08;
+                }
+
+                // Facteur niveau utilisateur (30%)
+                const levelFactor = this.getLevelFactor(profile.level, weather);
+                score *= levelFactor;
+
+                // Facteur board adaptée (20%)
+                if (board) {
+                    const boardFactor = this.getBoardFactor(board, weather, profile);
+                    score *= boardFactor;
+                }
+
+                // Facteur confiance données (10%)
+                score *= (weather.confidence || 0.7);
+
+                return Math.max(1, Math.min(10, score));
+            }
+
+            getBoardFactor(board, weather, profile) {
+                let factor = 1.0;
+                
+                const boardAdaptation = {
+                    'longboard': { minWave: 0.3, maxWave: 1.5, skillBonus: 0.1 },
+                    'shortboard': { minWave: 1.0, maxWave: 4.0, skillPenalty: 0.2 },
+                    'fish': { minWave: 0.5, maxWave: 2.0, speedBonus: 0.15 },
+                    'midlength': { minWave: 0.6, maxWave: 2.5, versatile: 0.1 }
+                };
+
+                const adaptation = boardAdaptation[board.type];
+                if (adaptation) {
+                    if (weather.waveHeight >= adaptation.minWave && weather.waveHeight <= adaptation.maxWave) {
+                        factor += 0.1;
+                    }
+                    
+                    if (adaptation.skillBonus && profile.level === 'beginner') {
+                        factor += adaptation.skillBonus;
+                    }
+                    
+                    if (adaptation.skillPenalty && profile.level === 'beginner') {
+                        factor -= adaptation.skillPenalty;
+                    }
+                }
+                
+                return Math.max(0.7, Math.min(1.3, factor));
+            }
+
+            // UTILITAIRES
+            async fetchFromBackend(endpoint, options = {}) {
+                const url = `${this.backendUrl}${endpoint}`;
+                const response = await fetch(url, {
+                    headers: { 'Content-Type': 'application/json' },
+                    ...options
+                });
+                return await response.json();
+            }
+
+            async getAIPreferences(userId) {
+                if (this.cache.aiPreferences && this.isCacheValid('ai_prefs', this.weatherCacheTimeout)) {
+                    return this.cache.aiPreferences;
+                }
+
+                try {
+                    const data = await this.fetchFromBackend(`/api/v1/ai/demo/${userId}`);
+                    this.cache.aiPreferences = data.userPreferences;
+                    this.cache.lastUpdate.set('ai_prefs', Date.now());
+                    return this.cache.aiPreferences;
+                } catch (error) {
+                    console.warn('Erreur préférences IA:', error);
+                    return null;
+                }
+            }
+
+            isCacheValid(key, timeout) {
+                const lastUpdate = this.cache.lastUpdate.get(key);
+                return lastUpdate && (Date.now() - lastUpdate) < timeout;
+            }
+
+            processWeatherData(raw, spot) {
+                return {
+                    waveHeight: raw.waveHeight || 0,
+                    wavePeriod: raw.wavePeriod || 10,
+                    windSpeed: raw.windSpeed || 10,
+                    windDirection: raw.windDirection || 'N',
+                    tide: raw.tide || 'mid',
+                    waterTemp: raw.waterTemp || 15,
+                    confidence: raw.confidence || 0.7,
+                    timestamp: new Date().toISOString(),
+                    source: 'backend',
+                    spot: spot
+                };
+            }
+
+            getFallbackSpots() {
+                return {
+                    'France': {
+                        'Nouvelle-Aquitaine': {
+                            'Biarritz': [
+                                { id: 'biarritz-grande-plage', name: 'Grande Plage', coords: { lat: 43.4832, lng: -1.5586 }, type: 'beach_break', difficulty: 'beginner' },
+                                { id: 'biarritz-miramar', name: 'Miramar', coords: { lat: 43.4825, lng: -1.5595 }, type: 'beach_break', difficulty: 'intermediate' },
+                                { id: 'biarritz-cote-basques', name: 'Côte des Basques', coords: { lat: 43.4821, lng: -1.5601 }, type: 'reef_break', difficulty: 'intermediate' }
+                            ],
+                            'Anglet': [
+                                { id: 'anglet-chambre-amour', name: 'Chambre d\'Amour', coords: { lat: 43.5156, lng: -1.5267 }, type: 'beach_break', difficulty: 'intermediate' },
+                                { id: 'anglet-les-cavaliers', name: 'Les Cavaliers', coords: { lat: 43.5134, lng: -1.5278 }, type: 'beach_break', difficulty: 'beginner' }
+                            ],
+                            'Hossegor': [
+                                { id: 'hossegor-la-nord', name: 'La Nord', coords: { lat: 43.6619, lng: -1.4022 }, type: 'beach_break', difficulty: 'expert' },
+                                { id: 'hossegor-la-centrale', name: 'La Centrale', coords: { lat: 43.6615, lng: -1.4018 }, type: 'beach_break', difficulty: 'advanced' }
+                            ]
+                        }
+                    }
+                };
+            }
+
+            getDefaultWeatherData() {
+                return {
+                    waveHeight: 1.0,
+                    wavePeriod: 10,
+                    windSpeed: 15,
+                    windDirection: 'W',
+                    tide: 'mid',
+                    waterTemp: 15,
+                    confidence: 0.5,
+                    source: 'default'
+                };
+            }
+
+            getDefaultProfile() {
+                return {
+                    level: 'intermediate',
+                    preferences: { waveMin: 0.8, waveMax: 2.5 }
+                };
+            }
+
+            getLevelFactor(level, weather) {
+                const factors = {
+                    'beginner': weather.waveHeight > 1.5 ? 0.7 : 1.1,
+                    'intermediate': 1.0,
+                    'advanced': weather.waveHeight < 1.0 ? 0.9 : 1.1,
+                    'expert': weather.waveHeight < 1.5 ? 0.8 : 1.2
+                };
+                return factors[level] || 1.0;
+            }
+
+            generateRecommendation(score, weather, profile) {
+                if (score >= 8) return "Session PARFAITE pour vous ! Conditions idéales selon votre profil.";
+                if (score >= 7) return "Excellente session en perspective ! Très proche de vos préférences.";
+                if (score >= 6) return "Bonne session possible. Conditions favorables.";
+                if (score >= 5) return "Session correcte mais pas optimale pour votre niveau.";
+                return "Conditions peu favorables selon votre profil.";
+            }
+        }
+
+        // ========================================
+        // VARIABLES GLOBALES ET INITIALISATION
+        // ========================================
         let backendUrl = 'https://surfai-backend-production.up.railway.app';
         let backendApiKey = null;
+        let supabaseClient = null;
+        let dataManager = null;
         let userData = {
             sessions: [],
             spots: [],
@@ -696,7 +1205,6 @@
             boards: []
         };
 
-        // Configuration initiale
         document.addEventListener('DOMContentLoaded', async function() {
             // Définir la date d'aujourd'hui par défaut
             document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
@@ -704,6 +1212,8 @@
             // Charger config sauvegardée
             const savedBackendUrl = localStorage.getItem('backend_url');
             const savedApiKey = localStorage.getItem('backend_api_key');
+            const savedSupabaseUrl = localStorage.getItem('supabase_url');
+            const savedSupabaseKey = localStorage.getItem('supabase_key');
             
             if (savedBackendUrl) {
                 backendUrl = savedBackendUrl;
@@ -713,24 +1223,615 @@
                 backendApiKey = savedApiKey;
                 document.getElementById('backend-api-key').value = savedApiKey;
             }
+            if (savedSupabaseUrl) document.getElementById('supabase-url').value = savedSupabaseUrl;
+            if (savedSupabaseKey) document.getElementById('supabase-key').value = savedSupabaseKey;
+
+            // Initialiser gestionnaire centralisé
+            dataManager = new SurfAIDataManager(backendUrl, supabaseClient);
+            console.log('Gestionnaire centralisé initialisé');
+            
+            // Auto-connexion Supabase si config existe
+            if (savedSupabaseUrl && savedSupabaseKey) {
+                console.log('Auto-connexion Supabase...');
+                await testSupabaseConnection();
+            }
             
             // Test auto du backend
             await checkBackendConnection();
             
-            // Charger données de base
-            loadSessions();
-            loadSpots();
-            loadProfile();
+            // Charger données harmonisées
+            await loadHarmonizedData();
             
-            // Charger recommandations intelligentes par défaut
+            // Charger recommandations intelligentes
             await generateIntelligentRecommendations();
         });
 
         // ========================================
-        // FONCTIONS BACKEND CORRIGÉES
+        // CHARGEMENT DONNÉES HARMONISÉES
+        // ========================================
+        
+        async function loadHarmonizedData() {
+            try {
+                // Charger spots hiérarchiques
+                await loadSpotsHierarchy();
+                
+                // Charger boards utilisateur
+                await loadUserBoards();
+                
+                // Charger profil
+                await loadProfile();
+                
+                console.log('Données harmonisées chargées');
+            } catch (error) {
+                console.error('Erreur chargement données harmonisées:', error);
+            }
+        }
+
+        async function loadSpotsHierarchy() {
+            try {
+                const spots = await dataManager.getSpots();
+                
+                // Peupler tous les sélecteurs de pays
+                const countrySelectors = ['session-country', 'spots-country', 'forecast-country'];
+                const countries = Object.keys(spots);
+                
+                countrySelectors.forEach(selectorId => {
+                    const select = document.getElementById(selectorId);
+                    if (select) {
+                        select.innerHTML = '<option value="">Sélectionnez un pays</option>';
+                        countries.forEach(country => {
+                            select.innerHTML += `<option value="${country}">${country}</option>`;
+                        });
+                    }
+                });
+                
+                // Afficher spots dans l'onglet spots
+                displayAllSpots(spots);
+                
+            } catch (error) {
+                console.error('Erreur chargement spots:', error);
+            }
+        }
+
+        async function loadUserBoards() {
+            try {
+                const boards = await dataManager.getUserBoards(dataManager.currentUserId);
+                
+                // Peupler sélecteurs de boards
+                const boardSelectors = ['session-board', 'forecast-board'];
+                
+                boardSelectors.forEach(selectorId => {
+                    const select = document.getElementById(selectorId);
+                    if (select) {
+                        select.innerHTML = '<option value="">Aucune board</option>';
+                        boards.forEach(board => {
+                            select.innerHTML += `<option value="${board.id}">${board.name} (${board.size})</option>`;
+                        });
+                    }
+                });
+                
+                // Mettre à jour userData pour compatibilité
+                userData.boards = boards;
+                
+            } catch (error) {
+                console.error('Erreur chargement boards:', error);
+            }
+        }
+
+        // ========================================
+        // NAVIGATION HIÉRARCHIQUE SPOTS
+        // ========================================
+        
+        async function updateRegions() {
+            const country = document.getElementById('session-country').value;
+            const regionSelect = document.getElementById('session-region');
+            const citySelect = document.getElementById('session-city');
+            const spotSelect = document.getElementById('session-spot');
+            
+            // Reset sélecteurs suivants
+            regionSelect.innerHTML = '<option value="">Sélectionnez une région</option>';
+            citySelect.innerHTML = '<option value="">Sélectionnez une ville</option>';
+            spotSelect.innerHTML = '<option value="">Sélectionnez un spot</option>';
+            
+            if (!country) return;
+            
+            try {
+                const regions = await dataManager.getSpotsByLevel(country);
+                regions.forEach(region => {
+                    regionSelect.innerHTML += `<option value="${region}">${region}</option>`;
+                });
+            } catch (error) {
+                console.error('Erreur mise à jour régions:', error);
+            }
+        }
+
+        async function updateCities() {
+            const country = document.getElementById('session-country').value;
+            const region = document.getElementById('session-region').value;
+            const citySelect = document.getElementById('session-city');
+            const spotSelect = document.getElementById('session-spot');
+            
+            citySelect.innerHTML = '<option value="">Sélectionnez une ville</option>';
+            spotSelect.innerHTML = '<option value="">Sélectionnez un spot</option>';
+            
+            if (!country || !region) return;
+            
+            try {
+                const cities = await dataManager.getSpotsByLevel(country, region);
+                cities.forEach(city => {
+                    citySelect.innerHTML += `<option value="${city}">${city}</option>`;
+                });
+            } catch (error) {
+                console.error('Erreur mise à jour villes:', error);
+            }
+        }
+
+        async function updateSpots() {
+            const country = document.getElementById('session-country').value;
+            const region = document.getElementById('session-region').value;
+            const city = document.getElementById('session-city').value;
+            const spotSelect = document.getElementById('session-spot');
+            
+            spotSelect.innerHTML = '<option value="">Sélectionnez un spot</option>';
+            
+            if (!country || !region || !city) return;
+            
+            try {
+                const spots = await dataManager.getSpotsByLevel(country, region, city);
+                spots.forEach(spot => {
+                    spotSelect.innerHTML += `<option value="${spot.id}">${spot.name}</option>`;
+                });
+            } catch (error) {
+                console.error('Erreur mise à jour spots:', error);
+            }
+        }
+
+        // Navigation météo (même logique)
+        async function updateForecastRegions() {
+            const country = document.getElementById('forecast-country').value;
+            const regionSelect = document.getElementById('forecast-region');
+            const citySelect = document.getElementById('forecast-city');
+            const spotSelect = document.getElementById('forecast-spot');
+            
+            regionSelect.innerHTML = '<option value="">Sélectionnez une région</option>';
+            citySelect.innerHTML = '<option value="">Sélectionnez une ville</option>';
+            spotSelect.innerHTML = '<option value="">Sélectionnez un spot</option>';
+            
+            if (!country) return;
+            
+            try {
+                const regions = await dataManager.getSpotsByLevel(country);
+                regions.forEach(region => {
+                    regionSelect.innerHTML += `<option value="${region}">${region}</option>`;
+                });
+            } catch (error) {
+                console.error('Erreur forecast régions:', error);
+            }
+        }
+
+        async function updateForecastCities() {
+            const country = document.getElementById('forecast-country').value;
+            const region = document.getElementById('forecast-region').value;
+            const citySelect = document.getElementById('forecast-city');
+            const spotSelect = document.getElementById('forecast-spot');
+            
+            citySelect.innerHTML = '<option value="">Sélectionnez une ville</option>';
+            spotSelect.innerHTML = '<option value="">Sélectionnez un spot</option>';
+            
+            if (!country || !region) return;
+            
+            try {
+                const cities = await dataManager.getSpotsByLevel(country, region);
+                cities.forEach(city => {
+                    citySelect.innerHTML += `<option value="${city}">${city}</option>`;
+                });
+            } catch (error) {
+                console.error('Erreur forecast villes:', error);
+            }
+        }
+
+        async function updateForecastSpots() {
+            const country = document.getElementById('forecast-country').value;
+            const region = document.getElementById('forecast-region').value;
+            const city = document.getElementById('forecast-city').value;
+            const spotSelect = document.getElementById('forecast-spot');
+            
+            spotSelect.innerHTML = '<option value="">Sélectionnez un spot</option>';
+            
+            if (!country || !region || !city) return;
+            
+            try {
+                const spots = await dataManager.getSpotsByLevel(country, region, city);
+                spots.forEach(spot => {
+                    spotSelect.innerHTML += `<option value="${spot.id}">${spot.name}</option>`;
+                });
+            } catch (error) {
+                console.error('Erreur forecast spots:', error);
+            }
+        }
+
+        // Navigation spots onglet
+        async function updateSpotsNavigation() {
+            const country = document.getElementById('spots-country').value;
+            const region = document.getElementById('spots-region').value;
+            const city = document.getElementById('spots-city').value;
+            
+            try {
+                const spots = await dataManager.getSpots();
+                displayFilteredSpots(spots, country, region, city);
+            } catch (error) {
+                console.error('Erreur navigation spots:', error);
+            }
+        }
+
+        function displayAllSpots(spotsHierarchy) {
+            const allSpotsList = document.getElementById('all-spots-list');
+            let html = '';
+            
+            Object.entries(spotsHierarchy).forEach(([country, regions]) => {
+                Object.entries(regions).forEach(([region, cities]) => {
+                    Object.entries(cities).forEach(([city, spots]) => {
+                        spots.forEach(spot => {
+                            html += `
+                                <div class="card">
+                                    <h4>🏄‍♂️ ${spot.name}</h4>
+                                    <p>📍 ${city}, ${region}, ${country}</p>
+                                    <p style="font-size: 0.9rem; color: #666;">
+                                        🖖 ${spot.type} • 💨 ${spot.difficulty}
+                                    </p>
+                                </div>
+                            `;
+                        });
+                    });
+                });
+            });
+            
+            allSpotsList.innerHTML = html;
+        }
+
+        function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filterCity) {
+            const allSpotsList = document.getElementById('all-spots-list');
+            let html = '';
+            
+            Object.entries(spotsHierarchy).forEach(([country, regions]) => {
+                if (filterCountry && country !== filterCountry) return;
+                
+                Object.entries(regions).forEach(([region, cities]) => {
+                    if (filterRegion && region !== filterRegion) return;
+                    
+                    Object.entries(cities).forEach(([city, spots]) => {
+                        if (filterCity && city !== filterCity) return;
+                        
+                        spots.forEach(spot => {
+                            html += `
+                                <div class="card">
+                                    <h4>🏄‍♂️ ${spot.name}</h4>
+                                    <p>📍 ${city}, ${region}, ${country}</p>
+                                    <p style="font-size: 0.9rem; color: #666;">
+                                        🖖 ${spot.type} • 💨 ${spot.difficulty}
+                                    </p>
+                                </div>
+                            `;
+                        });
+                    });
+                });
+            });
+            
+            allSpotsList.innerHTML = html || '<div class="card"><p>Aucun spot trouvé pour ces critères.</p></div>';
+        }
+
+        // ========================================
+        // FONCTIONS MÉTÉO HARMONISÉES
+        // ========================================
+        
+        async function getIntelligentForecast() {
+            const spotId = document.getElementById('forecast-spot').value;
+            const level = document.getElementById('forecast-level').value;
+            const boardId = document.getElementById('forecast-board').value;
+            const forecastGrid = document.getElementById('forecast-grid');
+            
+            if (!spotId) {
+                showMessage('error', 'Veuillez sélectionner un spot');
+                return;
+            }
+            
+            forecastGrid.innerHTML = '<div class="loading">🌊 Récupération prédictions harmonisées...</div>';
+            
+            try {
+                // Utiliser gestionnaire centralisé pour prédiction personnalisée
+                const prediction = await dataManager.getPersonalizedPrediction(
+                    dataManager.currentUserId, 
+                    spotId, 
+                    boardId
+                );
+                
+                displayPersonalizedForecast(prediction, level);
+                
+            } catch (error) {
+                console.error('Erreur prévisions harmonisées:', error);
+                forecastGrid.innerHTML = `
+                    <div class="error">
+                        ❌ Erreur: ${error.message}<br>
+                        Impossible de récupérer les prévisions personnalisées.
+                    </div>
+                `;
+            }
+        }
+
+        function displayPersonalizedForecast(prediction, level) {
+            const forecastGrid = document.getElementById('forecast-grid');
+            const weather = prediction.weather;
+            const score = prediction.score;
+            
+            let cardClass = 'forecast-card';
+            let scoreClass = 'forecast-score';
+            
+            if (score >= 8) {
+                cardClass += ' excellent';
+                scoreClass += ' excellent';
+            } else if (score >= 6) {
+                cardClass += ' good';  
+                scoreClass += ' good';
+            } else {
+                cardClass += ' average';
+                scoreClass += ' average';
+            }
+            
+            const spot = document.getElementById('forecast-spot').selectedOptions[0]?.text || 'Spot sélectionné';
+            const board = document.getElementById('forecast-board').selectedOptions[0]?.text || 'Aucune board';
+            
+            forecastGrid.innerHTML = `
+                <div class="card" style="margin-bottom: 15px; background: linear-gradient(45deg, #f0fff4, #ffffff); border-left: 4px solid #48bb78;">
+                    <h4>🧠 Prédiction IA Personnalisée Harmonisée</h4>
+                    <p><strong>Analyse basée sur vos préférences IA + board + niveau</strong></p>
+                </div>
+                
+                <div class="${cardClass}">
+                    <div class="forecast-header">
+                        <span class="forecast-date">📍 ${spot} - Maintenant</span>
+                        <span class="${scoreClass}">${score.toFixed(1)}/10</span>
+                    </div>
+                    
+                    <div class="forecast-conditions">
+                        <div class="condition">🌊 ${weather.waveHeight.toFixed(1)}m</div>
+                        <div class="condition">⏱️ ${weather.wavePeriod.toFixed(1)}s</div>
+                        <div class="condition">💨 ${Math.round(weather.windSpeed)}km/h</div>
+                        <div class="condition">🧭 ${weather.windDirection}</div>
+                        <div class="condition">🌊 ${weather.tide}</div>
+                        <div class="condition">🌡️ ${weather.waterTemp.toFixed(1)}°C</div>
+                    </div>
+                    
+                    <div class="prediction-info">
+                        <div class="prediction-recommendation">
+                            ${prediction.recommendation}
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.8rem; color: #666;">
+                            <strong>Board:</strong> ${board}<br>
+                            <strong>Niveau:</strong> ${level} • <strong>Confiance:</strong> ${Math.round(weather.confidence * 100)}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="background: #f8fafc; margin-top: 15px;">
+                    <h4>🎯 Facteurs pris en compte</h4>
+                    <ul style="margin-left: 20px; font-size: 0.9rem;">
+                        <li>✅ Vos préférences IA apprises</li>
+                        <li>✅ Adaptation board sélectionnée</li>
+                        <li>✅ Votre niveau de surf</li>
+                        <li>✅ Conditions météo temps réel</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // ========================================
+        // RECOMMANDATIONS HARMONISÉES
+        // ========================================
+        
+        async function generateIntelligentRecommendations() {
+            const recommendationsDiv = document.getElementById('recommendations');
+            recommendationsDiv.innerHTML = '<div class="loading">🧠 Analyse IA harmonisée...</div>';
+            
+            try {
+                // Utiliser le gestionnaire centralisé
+                const [aiData, weatherData] = await Promise.all([
+                    dataManager.getAIPreferences(dataManager.currentUserId),
+                    dataManager.getWeatherData('biarritz-grande-plage')
+                ]);
+                
+                if (aiData) {
+                    const recommendations = `
+                        <div style="margin-bottom: 15px; padding: 10px; background: linear-gradient(45deg, #e6fffa, #ffffff); border-radius: 8px; border-left: 4px solid #48bb78;">
+                            <strong>🧠 IA SurfAI v2.0 - Données Harmonisées</strong><br>
+                            <span style="font-size: 0.9rem; color: #666;">Analyse ${aiData.totalSessions} sessions + météo temps réel</span>
+                        </div>
+                        <div class="card">
+                            <h4>🎯 Prochaine session optimale</h4>
+                            <p><strong>Conditions personnalisées selon votre profil</strong></p>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 10px; font-size: 0.9rem; color: #666;">
+                                <div>🌊 Optimal: ${aiData.wavePreferences?.optimalHeight?.value || 1.5}m</div>
+                                <div>💨 Vent: ${aiData.windPreferences?.preferredDirection || 'SW'} ${aiData.windPreferences?.optimalSpeed?.value || 15}km/h</div>
+                                <div>🏖️ Favori: ${aiData.spotPreferences?.favorite?.name || 'Biarritz'}</div>
+                                <div>⏰ Heure: ${aiData.timePreferences?.preferredHour || 11}h</div>
+                            </div>
+                            <div style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 6px;">
+                                <strong>🌊 Conditions actuelles:</strong> 
+                                Vagues ${weatherData.waveHeight.toFixed(1)}m • 
+                                Vent ${Math.round(weatherData.windSpeed)}km/h ${weatherData.windDirection} • 
+                                ${weatherData.tide} marée
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 6px; font-size: 0.9rem; color: #666;">
+                            💡 <strong>Insights IA:</strong> ${aiData.behavioralInsights?.join(' • ') || 'Continuez à surfer pour plus d\'insights'}
+                        </div>
+                    `;
+                    
+                    recommendationsDiv.innerHTML = recommendations;
+                } else {
+                    throw new Error('Données IA non disponibles');
+                }
+                
+            } catch (error) {
+                console.error('Erreur recommandations harmonisées:', error);
+                recommendationsDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Erreur analyse harmonisée: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // ========================================
+        // SESSIONS AVEC BOARDS
+        // ========================================
+        
+        async function submitSession() {
+            const spotId = document.getElementById('session-spot').value;
+            const date = document.getElementById('session-date').value;
+            const rating = document.getElementById('session-rating').value;
+            const notes = document.getElementById('session-notes').value;
+            const boardId = document.getElementById('session-board').value;
+            
+            if (!spotId || !date || !rating) {
+                showMessage('error', 'Veuillez remplir tous les champs obligatoires');
+                return;
+            }
+            
+            try {
+                // Récupérer info spot pour envoi backend
+                const spot = await dataManager.findSpotById(spotId);
+                const spotName = spot ? spot.name : spotId;
+                
+                const sessionData = {
+                    userId: dataManager.currentUserId,
+                    spot: spotName,
+                    date: `${date}T08:00:00Z`,
+                    rating: parseInt(rating),
+                    notes: notes,
+                    duration: 90,
+                    boardId: boardId || null
+                };
+                
+                // Envoyer au backend
+                const response = await dataManager.fetchFromBackend('/api/v1/sessions/quick', {
+                    method: 'POST',
+                    body: JSON.stringify(sessionData)
+                });
+                
+                // Si Supabase disponible, sauvegarder aussi
+                if (dataManager.supabase && boardId) {
+                    await dataManager.supabase
+                        .from('user_sessions')
+                        .insert([{
+                            user_id: dataManager.currentUserId,
+                            spot_id: spotId,
+                            board_id: boardId,
+                            date: `${date}T08:00:00Z`,
+                            rating: parseInt(rating),
+                            notes: notes
+                        }]);
+                }
+                
+                showMessage('success', 'Session enregistrée avec succès !');
+                
+                // Reset form
+                document.getElementById('session-spot').value = '';
+                document.getElementById('session-rating').value = '';
+                document.getElementById('session-notes').value = '';
+                document.getElementById('session-board').value = '';
+                
+                // Invalider cache IA pour re-calcul
+                dataManager.cache.aiPreferences = null;
+                
+            } catch (error) {
+                showMessage('error', `Erreur: ${error.message}`);
+            }
+        }
+
+        // ========================================
+        // GESTION BOARDS HARMONISÉE
+        // ========================================
+        
+        async function addBoard() {
+            const name = document.getElementById('board-name').value;
+            const size = document.getElementById('board-size').value;
+            const type = document.getElementById('board-type').value;
+            const shaper = document.getElementById('board-shaper').value;
+            
+            if (!name || !size || !type || !shaper) {
+                showMessage('error', 'Veuillez remplir tous les champs');
+                return;
+            }
+            
+            try {
+                const board = { name, size, type, shaper };
+                await dataManager.saveUserBoard(dataManager.currentUserId, board);
+                
+                // Reset form
+                document.getElementById('board-name').value = '';
+                document.getElementById('board-size').value = '';
+                document.getElementById('board-type').value = '';
+                document.getElementById('board-shaper').value = '';
+                
+                showMessage('success', 'Board ajoutée avec succès !');
+                
+                // Recharger boards dans tous les sélecteurs
+                await loadUserBoards();
+                await loadProfile();
+                
+            } catch (error) {
+                showMessage('error', `Erreur: ${error.message}`);
+            }
+        }
+
+        // ========================================
+        // CONFIGURATION SUPABASE
+        // ========================================
+        
+        async function testSupabaseConnection() {
+            const url = document.getElementById('supabase-url').value;
+            const key = document.getElementById('supabase-key').value;
+            
+            if (!url || !key) {
+                showMessage('error', 'Veuillez renseigner URL et clé Supabase');
+                return;
+            }
+            
+            try {
+                // Créer client Supabase
+                supabaseClient = supabase.createClient(url, key);
+                
+                // Test de connexion
+                const { data, error } = await supabaseClient
+                    .from('spots')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) throw new Error(`Erreur Supabase: ${error.message}`);
+                
+                // Mettre à jour gestionnaire centralisé
+                dataManager.supabase = supabaseClient;
+                
+                // Sauvegarder config
+                localStorage.setItem('supabase_url', url);
+                localStorage.setItem('supabase_key', key);
+                
+                showMessage('success', `✅ Supabase connecté ! Base de données opérationnelle.`);
+                
+                // Recharger données avec Supabase
+                await loadHarmonizedData();
+                updateAppStatus();
+                
+            } catch (error) {
+                console.error('Erreur Supabase:', error);
+                showMessage('error', `❌ ${error.message}`);
+            }
+        }
+
+        // ========================================
+        // FONCTIONS BACKEND (INCHANGÉES)
         // ========================================
 
-        // Vérifier connexion backend
         async function checkBackendConnection() {
             try {
                 const response = await fetch(`${backendUrl}/health`);
@@ -750,7 +1851,6 @@
             }
         }
 
-        // Mettre à jour le statut backend
         function updateBackendStatus(connected, message) {
             const statusDiv = document.getElementById('backend-status');
             const indicator = document.getElementById('backend-indicator');
@@ -767,265 +1867,99 @@
             messageEl.textContent = message;
         }
 
-        // Appel API backend avec gestion d'erreurs
-        async function backendRequest(endpoint, options = {}) {
-            const url = `${backendUrl}${endpoint}`;
-            const headers = {
-                'Content-Type': 'application/json',
-                ...options.headers
-            };
+        async function testBackendConnection() {
+            const url = document.getElementById('backend-url').value;
+            const apiKey = document.getElementById('backend-api-key').value;
+            const resultDiv = document.getElementById('backend-test-result');
             
-            // Ajouter clé API si configurée
-            if (backendApiKey && options.requireAuth) {
-                headers['X-API-Key'] = backendApiKey;
-            }
-            
-            const requestOptions = {
-                ...options,
-                headers
-            };
-            
-            console.log(`🔗 Appel backend: ${url}`);
+            resultDiv.innerHTML = '<div class="loading">🧪 Test en cours...</div>';
             
             try {
-                const response = await fetch(url, requestOptions);
-                const data = await response.json();
+                backendUrl = url;
+                backendApiKey = apiKey;
+                localStorage.setItem('backend_url', url);
+                localStorage.setItem('backend_api_key', apiKey);
                 
-                if (!response.ok) {
-                    throw new Error(data.message || `Erreur ${response.status}`);
+                // Mettre à jour gestionnaire centralisé
+                dataManager.backendUrl = url;
+                
+                const healthResponse = await fetch(`${url}/health`);
+                const healthData = await healthResponse.json();
+                
+                if (!healthResponse.ok) {
+                    throw new Error(`Backend non accessible (${healthResponse.status})`);
                 }
                 
-                return data;
-            } catch (error) {
-                console.error(`❌ Erreur appel backend ${endpoint}:`, error);
-                throw error;
-            }
-        }
-
-        // ========================================
-        // RECOMMANDATIONS INTELLIGENTES CORRIGÉES
-        // ========================================
-        async function generateIntelligentRecommendations() {
-            const recommendationsDiv = document.getElementById('recommendations');
-            recommendationsDiv.innerHTML = '<div class="loading">🧠 Analyse IA en cours...</div>';
-            
-            try {
-                // Utiliser l'endpoint qui fonctionne
-                const data = await backendRequest('/api/v1/ai/demo/test_user');
+                const aiResponse = await fetch(`${url}/api/v1/ai/test`);
+                const aiData = await aiResponse.json();
                 
-                if (data && data.userPreferences) {
-                    const prediction = data.prediction;
-                    const preferences = data.userPreferences;
-                    
-                    const recommendations = `
-                        <div style="margin-bottom: 15px; padding: 10px; background: linear-gradient(45deg, #e6fffa, #ffffff); border-radius: 8px; border-left: 4px solid #48bb78;">
-                            <strong>🧠 IA SurfAI a analysé ${preferences.totalSessions} sessions</strong><br>
-                            <span style="font-size: 0.9rem; color: #666;">Voici vos recommandations personnalisées :</span>
-                        </div>
-                        <div class="card">
-                            <div style="position: absolute; top: 10px; right: 10px; background: #48bb78; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
-                                ${prediction.predictedScore}/10
-                            </div>
-                            <h4>🎯 ${prediction.spot} - Prédiction personnalisée</h4>
-                            <p><strong>${prediction.recommendations ? prediction.recommendations.join(' ') : 'Session recommandée pour votre niveau'}</strong></p>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; font-size: 0.9rem; color: #666;">
-                                <div>🌊 Vagues optimales: ${preferences.wavePreferences.optimalHeight.value}m</div>
-                                <div>💨 Vent optimal: ${preferences.windPreferences.preferredDirection} ${preferences.windPreferences.optimalSpeed.value}km/h</div>
-                                <div>🏖️ Spot favori: ${preferences.spotPreferences.favorite.name}</div>
-                                <div>⏰ Heure: ${preferences.timePreferences.preferredHour}h</div>
-                            </div>
-                        </div>
-                        <div style="margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 6px; font-size: 0.9rem; color: #666;">
-                            💡 <strong>Insights IA :</strong> ${preferences.behavioralInsights.join(' • ')}
-                        </div>
-                    `;
-                    
-                    recommendationsDiv.innerHTML = recommendations;
-                } else {
-                    throw new Error('Pas de données de prédiction disponibles');
-                }
+                const weatherResponse = await fetch(`${url}/api/v1/sessions/weather/auto?spot=Biarritz`);
+                const weatherData = await weatherResponse.json();
                 
-            } catch (error) {
-                console.error('❌ Erreur recommandations:', error);
-                recommendationsDiv.innerHTML = `
-                    <div class="error">
-                        ❌ Erreur analyse IA: ${error.message}<br>
-                        Vérifiez que le backend est accessible.
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Backend SurfAI connecté !<br>
+                        🥼 Health: ${healthData.status}<br>
+                        🤖 IA Engine: ${aiData.status === 'UPGRADED_TO_V2' ? '✅ v2.0 Fonctionnel' : '⚠️ Basique'}<br>
+                        🌊 Météo Auto: ${weatherData.success ? '✅ Fonctionnel' : '❌ Erreur'}<br>
+                        📊 Confiance météo: ${weatherData.weather ? Math.round(weatherData.weather.confidence * 100) + '%' : 'N/A'}
                     </div>
                 `;
-            }
-        }
-
-        // ========================================
-        // PRÉVISIONS MÉTÉO CORRIGÉES
-        // ========================================
-        async function getIntelligentForecast() {
-            const spot = document.getElementById('forecast-spot').value;
-            const level = document.getElementById('forecast-level').value;
-            const days = document.getElementById('forecast-days').value;
-            const forecastGrid = document.getElementById('forecast-grid');
-            
-            if (!spot) {
-                showMessage('error', 'Veuillez sélectionner un spot');
-                return;
-            }
-            
-            forecastGrid.innerHTML = '<div class="loading">🌊 Récupération des prévisions...</div>';
-            
-            try {
-                // Utiliser l'endpoint météo auto qui fonctionne
-                const weatherData = await backendRequest(`/api/v1/sessions/weather/auto?spot=${spot.charAt(0).toUpperCase() + spot.slice(1)}`);
                 
-                // Utiliser les prédictions IA pour personnaliser
-                const aiData = await backendRequest('/api/v1/ai/demo/test_user');
-                
-                // Créer prévision combinée
-                const forecast = createCombinedForecast(weatherData, aiData, level, days);
-                displaySimplifiedForecast(forecast, spot);
+                updateBackendStatus(true, 'Backend SurfAI v2.0 connecté et fonctionnel');
+                updateAppStatus();
                 
             } catch (error) {
-                console.error('❌ Erreur prévisions:', error);
-                forecastGrid.innerHTML = `
+                console.error('Erreur test backend:', error);
+                resultDiv.innerHTML = `
                     <div class="error">
-                        ❌ Erreur: ${error.message}<br>
-                        Impossible de récupérer les prévisions météo.
+                        ❌ ${error.message}<br>
+                        Vérifiez que le backend est démarré sur le bon port.
                     </div>
                 `;
+                updateBackendStatus(false, `Erreur: ${error.message}`);
             }
-        }
-
-        // Fonction pour créer prévision combinée
-        function createCombinedForecast(weatherData, aiData, level, days) {
-            const currentConditions = weatherData.weather;
-            const userPrefs = aiData.userPreferences;
-            
-            // Calculer score basé sur préférences IA
-            let score = 5.0; // Score de base
-            
-            if (userPrefs && userPrefs.wavePreferences) {
-                const waveOptimal = userPrefs.wavePreferences.optimalHeight.value;
-                const waveDiff = Math.abs(currentConditions.waveHeight - waveOptimal);
-                score -= waveDiff * 2; // Pénalité selon écart
-            }
-            
-            if (userPrefs && userPrefs.windPreferences) {
-                const windOptimal = userPrefs.windPreferences.optimalSpeed.value;
-                const windDiff = Math.abs(currentConditions.windSpeed - windOptimal);
-                score -= windDiff * 0.1;
-            }
-            
-            score = Math.max(1, Math.min(5, score)); // Limiter entre 1 et 5
-            
-            return {
-                spot: weatherData.spot,
-                conditions: currentConditions,
-                score: score,
-                userLevel: level,
-                confidence: weatherData.weather.confidence * 100,
-                recommendation: score >= 4 ? "Session excellente recommandée !" : 
-                               score >= 3 ? "Bonnes conditions pour votre niveau" :
-                               "Conditions moyennes, restez prudent"
-            };
-        }
-
-        // Affichage prévision simplifiée
-        function displaySimplifiedForecast(forecast, spot) {
-            const forecastGrid = document.getElementById('forecast-grid');
-            
-            let cardClass = 'forecast-card';
-            let scoreClass = 'forecast-score';
-            
-            if (forecast.score >= 4) {
-                cardClass += ' excellent';
-                scoreClass += ' excellent';
-            } else if (forecast.score >= 3) {
-                cardClass += ' good';
-                scoreClass += ' good';
-            } else {
-                cardClass += ' average';
-                scoreClass += ' average';
-            }
-            
-            forecastGrid.innerHTML = `
-                <div class="card" style="margin-bottom: 15px; background: linear-gradient(45deg, #f0fff4, #ffffff); border-left: 4px solid #48bb78;">
-                    <h4>🌊 Prévisions ${forecast.spot}</h4>
-                    <p><strong>Analyse basée sur vos préférences IA personnalisées</strong></p>
-                </div>
-                
-                <div class="${cardClass}">
-                    <div class="forecast-header">
-                        <span class="forecast-date">📍 ${spot.charAt(0).toUpperCase() + spot.slice(1)} - Maintenant</span>
-                        <span class="${scoreClass}">${forecast.score.toFixed(1)}/5</span>
-                    </div>
-                    
-                    <div class="forecast-conditions">
-                        <div class="condition">🌊 ${forecast.conditions.waveHeight.toFixed(1)}m</div>
-                        <div class="condition">⏱️ ${forecast.conditions.wavePeriod.toFixed(1)}s</div>
-                        <div class="condition">💨 ${Math.round(forecast.conditions.windSpeed)}km/h</div>
-                        <div class="condition">🧭 ${forecast.conditions.windDirection}</div>
-                        <div class="condition">🌊 ${forecast.conditions.tide}</div>
-                        <div class="condition">🌡️ ${forecast.conditions.waterTemp.toFixed(1)}°C</div>
-                    </div>
-                    
-                    <div class="prediction-info">
-                        <div class="prediction-recommendation">
-                            ${forecast.recommendation}
-                        </div>
-                        <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
-                            Confiance: ${Math.round(forecast.confidence)}% • Analyse personnalisée
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card" style="background: #f8fafc; margin-top: 15px;">
-                    <h4>💡 Pourquoi ce score ?</h4>
-                    <p style="font-size: 0.9rem;">L'IA analyse vos préférences personnelles pour calculer ce score. 
-                    Plus vous enregistrez de sessions, plus les prédictions sont précises !</p>
-                </div>
-            `;
         }
 
         // ========================================
-        // PRÉDICTIONS ONGLET CORRIGÉES
+        // PRÉDICTIONS HARMONISÉES
         // ========================================
+        
         async function generateIntelligentPredictions() {
             const level = document.getElementById('prediction-level').value;
             const days = document.getElementById('prediction-days').value;
             const predictionsDiv = document.getElementById('predictions-list');
             
-            predictionsDiv.innerHTML = '<div class="loading">🧠 Analyse prédictions personnalisées...</div>';
+            predictionsDiv.innerHTML = '<div class="loading">🧠 Analyse prédictions harmonisées...</div>';
             
             try {
-                // Récupérer les données IA et météo
-                const aiData = await backendRequest('/api/v1/ai/demo/test_user');
-                const weatherData = await backendRequest('/api/v1/sessions/weather/auto?spot=Biarritz');
+                const aiData = await dataManager.getAIPreferences(dataManager.currentUserId);
+                const weatherData = await dataManager.getWeatherData('biarritz-grande-plage');
                 
-                if (aiData && aiData.userPreferences) {
-                    const userPrefs = aiData.userPreferences;
-                    const currentConditions = weatherData.weather;
+                if (aiData) {
+                    const userPrefs = aiData;
+                    const currentConditions = weatherData;
                     
-                    // Simuler prédictions pour les prochains jours
                     const predictions = generateMultiDayPredictions(userPrefs, currentConditions, parseInt(days));
                     
                     let predictionsHtml = `
                         <div class="card" style="margin-bottom: 20px; background: linear-gradient(45deg, #f0fff4, #ffffff); border-left: 4px solid #48bb78;">
-                            <h4>🧠 Analyse Intelligente Personnalisée</h4>
+                            <h4>🧠 Analyse IA Harmonisée Complète</h4>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
                                 <div><strong>📊 Sessions analysées:</strong> ${userPrefs.totalSessions}</div>
                                 <div><strong>🎯 Niveau:</strong> ${level}</div>
                                 <div><strong>📅 Prévisions:</strong> ${days} jours</div>
-                                <div><strong>⭐ Confiance:</strong> ${Math.round(userPrefs.reliabilityScore * 100)}%</div>
+                                <div><strong>⭐ Confiance:</strong> ${Math.round((userPrefs.reliabilityScore || 0.5) * 100)}%</div>
                             </div>
                             <div style="padding: 10px; background: #e6fffa; border-radius: 6px;">
-                                <strong>🏄‍♂️ Vos préférences apprises:</strong><br>
-                                Vagues: ${userPrefs.wavePreferences.optimalHeight.value}m • 
-                                Vent: ${userPrefs.windPreferences.preferredDirection} ${userPrefs.windPreferences.optimalSpeed.value}km/h • 
-                                Spot favori: ${userPrefs.spotPreferences.favorite.name}
+                                <strong>🏄‍♂️ Données harmonisées:</strong><br>
+                                Vagues: ${userPrefs.wavePreferences?.optimalHeight?.value || 1.5}m • 
+                                Vent: ${userPrefs.windPreferences?.preferredDirection || 'SW'} ${userPrefs.windPreferences?.optimalSpeed?.value || 15}km/h • 
+                                Spot favori: ${userPrefs.spotPreferences?.favorite?.name || 'Biarritz'}
                             </div>
                         </div>
                     `;
                     
-                    // Afficher prédictions par jour
                     predictions.forEach((dayPred, index) => {
                         predictionsHtml += `
                             <div class="card" style="margin-bottom: 15px;">
@@ -1043,16 +1977,15 @@
                 }
                 
             } catch (error) {
-                console.error('❌ Erreur prédictions:', error);
+                console.error('Erreur prédictions harmonisées:', error);
                 predictionsDiv.innerHTML = `
                     <div class="error">
-                        ❌ Erreur prédictions personnalisées: ${error.message}
+                        ❌ Erreur prédictions harmonisées: ${error.message}
                     </div>
                 `;
             }
         }
 
-        // Générer prédictions multi-jours simulées
         function generateMultiDayPredictions(userPrefs, baseConditions, days) {
             const predictions = [];
             
@@ -1060,14 +1993,12 @@
                 const date = new Date();
                 date.setDate(date.getDate() + i + 1);
                 
-                // Simuler variation des conditions
                 const waveHeight = baseConditions.waveHeight + (Math.random() - 0.5) * 0.6;
                 const windSpeed = baseConditions.windSpeed + (Math.random() - 0.5) * 10;
                 
-                // Calculer score personnalisé
                 let score = 5.0;
-                const waveDiff = Math.abs(waveHeight - userPrefs.wavePreferences.optimalHeight.value);
-                const windDiff = Math.abs(windSpeed - userPrefs.windPreferences.optimalSpeed.value);
+                const waveDiff = Math.abs(waveHeight - (userPrefs.wavePreferences?.optimalHeight?.value || 1.5));
+                const windDiff = Math.abs(windSpeed - (userPrefs.windPreferences?.optimalSpeed?.value || 15));
                 
                 score -= waveDiff * 1.5;
                 score -= windDiff * 0.08;
@@ -1090,7 +2021,6 @@
             return predictions;
         }
 
-        // Créer carte de prédiction
         function createPredictionCard(prediction, userPrefs) {
             let cardClass = 'forecast-card';
             let scoreClass = 'forecast-score';
@@ -1124,7 +2054,7 @@
                             ${prediction.recommendation}
                         </div>
                         <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
-                            Score basé sur vos ${userPrefs ? userPrefs.totalSessions : 'X'} sessions analysées
+                            Score harmonisé basé sur ${userPrefs ? userPrefs.totalSessions : 'vos'} sessions analysées
                         </div>
                     </div>
                 </div>
@@ -1132,101 +2062,66 @@
         }
 
         // ========================================
-        // TEST BACKEND CORRIGÉ
+        // FONCTIONS UTILITAIRES ET NAVIGATION
         // ========================================
-        async function testBackendConnection() {
-            const url = document.getElementById('backend-url').value;
-            const apiKey = document.getElementById('backend-api-key').value;
-            const resultDiv = document.getElementById('backend-test-result');
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            resultDiv.innerHTML = '<div class="loading">🧪 Test en cours...</div>';
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
             
-            try {
-                // Sauvegarder la config
-                backendUrl = url;
-                backendApiKey = apiKey;
-                localStorage.setItem('backend_url', url);
-                localStorage.setItem('backend_api_key', apiKey);
-                
-                // Test health check
-                const healthResponse = await fetch(`${url}/health`);
-                const healthData = await healthResponse.json();
-                
-                if (!healthResponse.ok) {
-                    throw new Error(`Backend non accessible (${healthResponse.status})`);
-                }
-                
-                // Test API IA
-                const aiResponse = await fetch(`${url}/api/v1/ai/test`);
-                const aiData = await aiResponse.json();
-                
-                // Test météo auto
-                const weatherResponse = await fetch(`${url}/api/v1/sessions/weather/auto?spot=Biarritz`);
-                const weatherData = await weatherResponse.json();
-                
-                resultDiv.innerHTML = `
-                    <div class="success">
-                        ✅ Backend SurfAI connecté !<br>
-                        🥼 Health: ${healthData.status}<br>
-                        🤖 IA Engine: ${aiData.status === 'UPGRADED_TO_V2' ? '✅ v2.0 Fonctionnel' : '⚠️ Basique'}<br>
-                        🌊 Météo Auto: ${weatherData.success ? '✅ Fonctionnel' : '❌ Erreur'}<br>
-                        📊 Confiance météo: ${weatherData.weather ? Math.round(weatherData.weather.confidence * 100) + '%' : 'N/A'}
-                    </div>
-                `;
-                
-                updateBackendStatus(true, 'Backend SurfAI v2.0 connecté et fonctionnel');
-                updateAppStatus();
-                
-            } catch (error) {
-                console.error('Erreur test backend:', error);
-                resultDiv.innerHTML = `
-                    <div class="error">
-                        ❌ ${error.message}<br>
-                        Vérifiez que le backend est démarré sur le bon port.
-                    </div>
-                `;
-                updateBackendStatus(false, `Erreur: ${error.message}`);
-            }
+            if (tabName === 'sessions') loadSessions();
+            if (tabName === 'spots') loadSpots();
+            if (tabName === 'profile') loadProfile();
+            if (tabName === 'predictions') generateIntelligentPredictions();
         }
 
-        // ========================================
-        // FONCTIONS SESSIONS ET PROFIL
-        // ========================================
-        async function submitSession() {
-            const spot = document.getElementById('session-spot').value;
-            const date = document.getElementById('session-date').value;
-            const rating = document.getElementById('session-rating').value;
-            const notes = document.getElementById('session-notes').value;
+        function loadSessions() {
+            const sessionsList = document.getElementById('sessions-list');
+            sessionsList.innerHTML = `
+                <div class="card">
+                    <p>🏄‍♂️ Vos sessions apparaîtront ici une fois enregistrées.</p>
+                    <p>Système harmonisé : backend + Supabase + IA v2.0</p>
+                </div>
+            `;
+        }
+
+        function loadSpots() {
+            const favoritesList = document.getElementById('favorite-spots-list');
+            favoritesList.innerHTML = `
+                <div class="card">
+                    <h4>⭐ Vos spots favoris</h4>
+                    <p>Navigation hiérarchique disponible ci-dessus</p>
+                </div>
+            `;
+        }
+
+        function loadProfile() {
+            const boardsList = document.getElementById('user-boards-list');
             
-            if (!spot || !date || !rating) {
-                showMessage('error', 'Veuillez remplir tous les champs obligatoires');
-                return;
-            }
-            
-            try {
-                const sessionData = {
-                    userId: 'demo_user',
-                    spot: spot,
-                    date: `${date}T08:00:00Z`,
-                    rating: parseInt(rating),
-                    notes: notes,
-                    duration: 90
-                };
+            if (userData.boards && userData.boards.length > 0) {
+                const boardsHtml = userData.boards.map(board => `
+                    <div class="card">
+                        <h4>${board.name}</h4>
+                        <p>📏 Taille: ${board.size} • 🏄‍♂️ Type: ${board.type}</p>
+                        <p>🔨 Shaper: ${board.shaper}</p>
+                    </div>
+                `).join('');
                 
-                const response = await backendRequest('/api/v1/sessions/quick', {
-                    method: 'POST',
-                    body: JSON.stringify(sessionData)
-                });
-                
-                showMessage('success', 'Session enregistrée avec succès !');
-                
-                // Reset form
-                document.getElementById('session-spot').value = '';
-                document.getElementById('session-rating').value = '';
-                document.getElementById('session-notes').value = '';
-                
-            } catch (error) {
-                showMessage('error', `Erreur: ${error.message}`);
+                boardsList.innerHTML = boardsHtml;
+            } else {
+                boardsList.innerHTML = `
+                    <div class="card">
+                        <p>🏄‍♂️ Ajoutez vos boards ci-dessus.</p>
+                        <p>Elles seront intégrées dans les prédictions IA !</p>
+                    </div>
+                `;
             }
         }
 
@@ -1249,138 +2144,29 @@
             showMessage('success', 'Profil sauvegardé !');
         }
 
-        function addBoard() {
-            const name = document.getElementById('board-name').value;
-            const size = document.getElementById('board-size').value;
-            const type = document.getElementById('board-type').value;
-            const shaper = document.getElementById('board-shaper').value;
-            
-            if (!name || !size || !type || !shaper) {
-                showMessage('error', 'Veuillez remplir tous les champs');
-                return;
-            }
-            
-            const board = { name, size, type, shaper, id: Date.now() };
-            userData.boards.push(board);
-            
-            // Reset form
-            document.getElementById('board-name').value = '';
-            document.getElementById('board-size').value = '';
-            document.getElementById('board-type').value = '';
-            document.getElementById('board-shaper').value = '';
-            
-            showMessage('success', 'Board ajoutée !');
-            loadProfile();
-        }
-
-        // ========================================
-        // FONCTIONS NAVIGATION ET UTILITAIRES
-        // ========================================
-
-        // Navigation entre onglets
-        function showTab(tabName) {
-            // Masquer tous les onglets
-            document.querySelectorAll('.tab-panel').forEach(panel => {
-                panel.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Afficher l'onglet sélectionné
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-            
-            // Charger les données si nécessaire
-            if (tabName === 'sessions') loadSessions();
-            if (tabName === 'spots') loadSpots();
-            if (tabName === 'profile') loadProfile();
-            if (tabName === 'predictions') generateIntelligentPredictions();
-        }
-
-        // Fonctions de données simplifiées
-        function loadSessions() {
-            const sessionsList = document.getElementById('sessions-list');
-            sessionsList.innerHTML = `
-                <div class="card">
-                    <p>🏄‍♂️ Vos sessions apparaîtront ici une fois enregistrées.</p>
-                    <p>Le backend SurfAI est prêt à traiter vos données !</p>
-                </div>
-            `;
-        }
-
-        function loadSpots() {
-            const favoritesList = document.getElementById('favorite-spots-list');
-            const allSpotsList = document.getElementById('all-spots-list');
-            
-            favoritesList.innerHTML = `
-                <div class="card">
-                    <h4>⭐ Biarritz</h4>
-                    <p>📍 Pays Basque - Spot principal</p>
-                    <p style="font-size: 0.9rem; color: #666;">🖖 Beach break • 💨 Vent: N, NE</p>
-                </div>
-            `;
-            
-            allSpotsList.innerHTML = `
-                <div class="card">
-                    <h4>🏄‍♂️ Biarritz Grande Plage</h4>
-                    <p>📍 Pays Basque</p>
-                    <p style="font-size: 0.9rem; color: #666;">🖖 Beach break • 💨 Vent optimal: N, NE</p>
-                </div>
-                <div class="card">
-                    <h4>📍 Hossegor</h4>
-                    <p>📍 Nouvelle-Aquitaine</p>
-                    <p style="font-size: 0.9rem; color: #666;">🖖 Beach break • 💨 Vent optimal: E, SE</p>
-                </div>
-            `;
-        }
-
-        function loadProfile() {
-            const boardsList = document.getElementById('user-boards-list');
-            
-            if (userData.boards && userData.boards.length > 0) {
-                const boardsHtml = userData.boards.map(board => `
-                    <div class="card">
-                        <h4>${board.name}</h4>
-                        <p>📏 Taille: ${board.size} • 🏄‍♂️ Type: ${board.type}</p>
-                        <p>🔨 Shaper: ${board.shaper}</p>
-                    </div>
-                `).join('');
-                
-                boardsList.innerHTML = boardsHtml;
-            } else {
-                boardsList.innerHTML = `
-                    <div class="card">
-                        <p>🏄‍♂️ Ajoutez vos boards ci-dessus pour commencer !</p>
-                    </div>
-                `;
-            }
-        }
-
         function analyzePatterns() {
             const patternsDiv = document.getElementById('patterns');
-            patternsDiv.innerHTML = '<div class="loading">🧠 Analyse de vos patterns...</div>';
+            patternsDiv.innerHTML = '<div class="loading">🧠 Analyse patterns harmonisée...</div>';
             
             setTimeout(() => {
                 patternsDiv.innerHTML = `
                     <div class="success">
-                        <h4>🎯 Vos patterns détectés :</h4>
+                        <h4>🎯 Patterns harmonisés détectés :</h4>
                         <ul style="margin-left: 20px; margin-top: 10px;">
-                            <li>🌊 Conditions optimales: vagues 1.2-1.8m</li>
-                            <li>💨 Vent préféré: 10-15 km/h offshore</li>
-                            <li>📍 Spot favori: Biarritz</li>
-                            <li>⏰ Horaire préféré: 8h-10h et 17h-19h</li>
+                            <li>🌊 Conditions optimales analysées par l'IA v2.0</li>
+                            <li>💨 Préférences vent basées sur vos sessions</li>
+                            <li>📍 Spots favoris selon géolocalisation</li>
+                            <li>🏄‍♂️ Boards adaptées aux conditions</li>
                         </ul>
                         <p style="margin-top: 15px;">
-                            <strong>💡 L'IA recommande:</strong> 
-                            Surveillez les sessions avec vent NE léger et houle de 1.5m pour vos meilleures performances !
+                            <strong>💡 Système harmonisé :</strong> 
+                            Backend + Supabase + IA pour des prédictions ultra-précises !
                         </p>
                     </div>
                 `;
             }, 2000);
         }
 
-        // Fonctions utilitaires
         function showMessage(type, message) {
             const messageDiv = document.createElement('div');
             messageDiv.className = type;
@@ -1397,11 +2183,11 @@
             statusDiv.innerHTML = `
                 <p>🟢 Backend: Connecté et fonctionnel</p>
                 <p>🟢 IA Engine: v2.0 Opérationnel</p>
-                <p>🟢 Données: Prêtes pour l'IA</p>
+                <p>${supabaseClient ? '🟢' : '🔴'} Supabase: ${supabaseClient ? 'Connecté' : 'Non configuré'}</p>
+                <p>🟢 Données: Harmonisées et cohérentes</p>
             `;
         }
 
-        // Mettre à jour les statistiques du dashboard
         function updateDashboard() {
             document.getElementById('total-sessions').textContent = userData.sessions.length;
             document.getElementById('avg-rating').textContent = userData.sessions.length > 0 ? 
