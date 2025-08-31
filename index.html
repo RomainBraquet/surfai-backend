@@ -944,7 +944,7 @@
                 if (this.supabase) {
                     try {
                         const { data: boards, error } = await this.supabase
-                            .from('user_boards')
+                            .from('boards')
                             .select('*')
                             .eq('user_id', userId)
                             .order('created_at', { ascending: false });
@@ -968,7 +968,7 @@
                 if (this.supabase) {
                     try {
                         const { data, error } = await this.supabase
-                            .from('user_boards')
+                            .from('boards')
                             .insert([{
                                 user_id: userId,
                                 name: board.name,
