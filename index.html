@@ -1596,8 +1596,13 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                             <h4>🏄‍♂️ ${spot.name}</h4>
                             <p>📍 ${city}, ${region}, ${country}</p>
                             <p style="font-size: 0.9rem; color: #666;">
-                                🖖 ${spot.type} • 💨 ${spot.difficulty}
+                                🏖️ ${spot.type} • 💨 Vent: ${spot.idealWind && spot.idealWind.length > 0 ? spot.idealWind.join('/') : 'Variable'} • 🌊 Houle: ${spot.idealSwell && spot.idealSwell.length > 0 ? spot.idealSwell.join('/') : 'Variable'} • 🌊 Marée: ${spot.idealTide && spot.idealTide.length > 0 ? spot.idealTide.join('/') : 'Variable'}
                             </p>
+                            <div style="margin-top: 8px;">
+                                <button onclick="toggleFavorite('${spot.id}')" class="button secondary" style="padding: 4px 8px; font-size: 0.8rem;">
+                                    ⭐ Ajouter aux favoris
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
