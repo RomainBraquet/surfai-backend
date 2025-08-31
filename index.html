@@ -785,7 +785,16 @@
                 this.staticCacheTimeout = 24 * 60 * 60 * 1000; // 24h
                 this.currentUserId = '3ba8ad73-e2c6-4971-8b32-5a123456789a';
             }
-
+            parsePostgreSQLArray(pgArray) {
+                if (!pgArray) return null;
+                if (Array.isArray(pgArray)) return pgArray;
+                
+                return pgArray.toString()
+                    .replace(/[{}]/g, '')
+                    .split(',')
+                    .map(item => item.trim())
+                    .filter(item => item.length > 0);
+            }
             // GESTION SPOTS
             async getSpots() {
                 if (this.cache.spots && this.isCacheValid('spots', this.staticCacheTimeout)) {
@@ -822,15 +831,14 @@
                     if (!hierarchy[spot.country][spot.region]) hierarchy[spot.country][spot.region] = {};
                     if (!hierarchy[spot.country][spot.region][spot.city]) hierarchy[spot.country][spot.region][spot.city] = [];
                     
-                    hierarchy[country][region][city].push({
+                    hierarchy[spot.country][spot.region][spot.city].push({
                         id: spot.id,
                         name: spot.name,
                         coords: { lat: spot.lat, lng: spot.lng },
                         type: spot.bottom_type || 'sand',
-                        difficulty: spot.ideal_wind || ['E'],
-                        idealWind: spot.ideal_wind,
-                        idealSwell: spot.ideal_swell,
-                        idealTide: spot.ideal_tide,
+                        idealWind: this.parsePostgreSQLArray(spot.ideal_wind),
+                        idealSwell: this.parsePostgreSQLArray(spot.ideal_swell),
+                        idealTide: this.parsePostgreSQLArray(spot.ideal_tide),
                         isFavorite: false
                     });
                 });
@@ -1517,12 +1525,12 @@ function displayAllSpots(spotsHierarchy) {
                             <p>📍 ${city}, ${region}, ${country}</p>
                             <p style="font-size: 0.9rem; color: #666;">
                                 🏖️ ${spot.type} • 💨 Vent: ${spot.idealWind ? spot.idealWind.join('/') : 'Variable'} • 🌊 Houle: ${spot.idealSwell ? spot.idealSwell.join('/') : 'Variable'} • 🌊 Marée: ${spot.idealTide ? spot.idealTide.join('/') : 'Variable'}
-                            </p>
-                            <div style="margin-top: 8px;">
-                                <button onclick="toggleFavorite('${spot.id}')" class="button secondary" style="padding: 4px 8px; font-size: 0.8rem;">
-                                    ⭐ Ajouter aux favoris
-                                </button>
-                            </div>
+                                </p>
+                                <div style="margin-top: 8px;">
+                                    <button onclick="toggleFavorite('${spot.id}')" class="button secondary" style="padding: 4px 8px; font-size: 0.8rem;">
+                                        ⭐ Ajouter aux favoris
+                                    </button>
+                                </div>
                         </div>
                     `;
                 });
