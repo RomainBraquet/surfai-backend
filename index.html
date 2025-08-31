@@ -816,11 +816,26 @@
             }
 
             buildSpotHierarchy(spots) {
-                const hierarchy = {};
-                spots.forEach(spot => {
-                    if (!hierarchy[spot.country]) hierarchy[spot.country] = {};
-                    if (!hierarchy[spot.country][spot.region]) hierarchy[spot.country][spot.region] = {};
-                    if (!hierarchy[spot.country][spot.region][spot.city]) hierarchy[spot.country][spot.region][spot.city] = [];
+    const hierarchy = {};
+    spots.forEach(spot => {
+        const country = spot.country || 'Pays inconnu';
+        const region = spot.region || 'Région inconnue';
+        const city = spot.city || spot.region || 'Ville inconnue';
+        
+        if (!hierarchy[country]) hierarchy[country] = {};
+        if (!hierarchy[country][region]) hierarchy[country][region] = {};
+        if (!hierarchy[country][region][city]) hierarchy[country][region][city] = [];
+        
+        hierarchy[country][region][city].push({
+            id: spot.id,
+            name: spot.name,
+            coords: { lat: spot.lat, lng: spot.lng },
+            type: spot.bottom_type || 'beach_break',
+            difficulty: spot.ideal_wind ? 'intermediate' : 'beginner'
+        });
+    });
+    return hierarchy;
+}
                     
                     hierarchy[spot.country][spot.region][spot.city].push({
                         id: spot.id,
@@ -944,7 +959,7 @@
                 if (this.supabase) {
                     try {
                         const { data: boards, error } = await this.supabase
-                            .from('user_boards')
+                            .from('boards')
                             .select('*')
                             .eq('user_id', userId)
                             .order('created_at', { ascending: false });
