@@ -7,6 +7,7 @@ const { body, query, validationResult } = require('express-validator');
 const stormglassService = require('../services/stormglassService');
 const predictionService = require('../services/predictionService');
 const smartSessionsService = require('../services/smartSessionsService');
+const WeatherFormattingService = require('../services/weatherDataFormattingService');
 
 console.log('🌊 Chargement des routes météo avec Stormglass...');
 
@@ -75,7 +76,8 @@ router.get('/forecast', [
       coordinates: coordinates
     };
 
-    res.json(finalData);
+    const formattedData = WeatherFormattingService.formatForAPI(finalData);
+    res.json(formattedData);
     
   } catch (error) {
     console.error('❌ Erreur route forecast:', error);
@@ -200,16 +202,18 @@ router.get('/smart-slots', [
       spot
     );
 
-    res.json({
-      success: true,
-      ...smartSlots,
-      coordinates: coordinates,
-      requestParams: {
-        days: parseInt(days),
-        userLevel: user_level,
-        spot: spot
-      }
-    });
+    const responseData = {
+  success: true,
+  ...smartSlots,
+  coordinates: coordinates,
+  requestParams: {
+    days: parseInt(days),
+    userLevel: user_level,
+    spot: spot
+  }
+};
+const formattedData = WeatherFormattingService.formatForAPI(responseData);
+res.json(formattedData);
 
   } catch (error) {
     console.error('❌ Erreur créneaux intelligents:', error);
