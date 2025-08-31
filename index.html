@@ -1272,6 +1272,9 @@
                 
                 // Charger profil
                 await loadProfile();
+
+                // Charger aussi les favoris
+                await loadFavoriteSpots();
                 
                 console.log('Données harmonisées chargées');
             } catch (error) {
@@ -1715,6 +1718,155 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                     </ul>
                 </div>
             `;
+        }
+
+        // Fonction pour gérer les spots favoris
+        async function toggleFavorite(spotId) {
+            if (!dataManager.supabase) {
+                showMessage('error', 'Connexion Supabase requise pour les favoris');
+                return;
+            }
+            
+            try {
+                const userId = dataManager.currentUserId;
+                
+                // Vérifier si le spot est déjà en favori
+                const { data: existing, error: checkError } = await dataManager.supabase
+                    .from('favorite_spots')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('spot_id', spotId)
+                    .single();
+                
+                if (checkError && checkError.code !== 'PGRST116') {
+                    throw checkError;
+                }
+                
+                if (existing) {
+                    // Retirer des favoris
+                    const { error: deleteError } = await dataManager.supabase
+                        .from('favorite_spots')
+                        .delete()
+                        .eq('user_id', userId)
+                        .eq('spot_id', spotId);
+                    
+                    if (deleteError) throw deleteError;
+                    
+                    showMessage('success', 'Spot retiré des favoris');
+                } else {
+                    // Ajouter aux favoris
+                    const { error: insertError } = await dataManager.supabase
+                        .from('favorite_spots')
+                        .insert([{
+                            user_id: userId,
+                            spot_id: spotId
+                        }]);
+                    
+                    if (insertError) throw insertError;
+                    
+                    showMessage('success', 'Spot ajouté aux favoris');
+                }
+                
+                // Recharger les spots pour mettre à jour l'affichage
+                await loadFavoriteSpots();
+                await loadSpotsHierarchy();
+                
+            } catch (error) {
+                console.error('Erreur gestion favoris:', error);
+                showMessage('error', `Erreur: ${error.message}`);
+            }
+        }
+        
+        // Fonction pour charger les spots favoris
+        async function loadFavoriteSpots() {
+            if (!dataManager.supabase) return;
+            
+            try {
+                const userId = dataManager.currentUserId;
+                
+                // Récupérer les favoris avec les détails des spots
+                const { data: favorites, error } = await dataManager.supabase
+                    .from('favorite_spots')
+                    .select(`
+                        id,
+                        spots (
+                            id,
+                            name,
+                            country,
+                            region,
+                            city,
+                            bottom_type,
+                            ideal_wind,
+                            ideal_swell,
+                            ideal_tide
+                        )
+                    `)
+                    .eq('user_id', userId);
+                
+                if (error) throw error;
+                
+                // Afficher les favoris
+                displayFavoriteSpots(favorites || []);
+                
+                return favorites || [];
+                
+            } catch (error) {
+                console.error('Erreur chargement favoris:', error);
+                document.getElementById('favorite-spots-list').innerHTML = `
+                    <div class="card">
+                        <p>Erreur chargement favoris: ${error.message}</p>
+                    </div>
+                `;
+                return [];
+            }
+        }
+        
+        // Fonction pour afficher les spots favoris
+        function displayFavoriteSpots(favorites) {
+            const favoritesList = document.getElementById('favorite-spots-list');
+            
+            if (favorites.length === 0) {
+                favoritesList.innerHTML = `
+                    <div class="card">
+                        <h4>⭐ Vos spots favoris</h4>
+                        <p>Aucun spot favori pour le moment. Ajoutez vos spots préférés depuis la liste ci-dessous !</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<div class="card"><h4>⭐ Vos spots favoris</h4></div>';
+            
+            favorites.forEach(fav => {
+                const spot = fav.spots;
+                if (spot) {
+                    html += `
+                        <div class="card" style="border-left: 4px solid #48bb78;">
+                            <h4>🏄‍♂️ ${spot.name}</h4>
+                            <p>📍 ${spot.city}, ${spot.region}, ${spot.country}</p>
+                            <p style="font-size: 0.9rem; color: #666;">
+                                🏖️ ${spot.bottom_type} • 💨 Vent: ${spot.ideal_wind ? spot.ideal_wind.join('/') : 'Variable'} • 🌊 Houle: ${spot.ideal_swell ? spot.ideal_swell.join('/') : 'Variable'} • 🌊 Marée: ${spot.ideal_tide ? spot.ideal_tide.join('/') : 'Variable'}
+                            </p>
+                            <div style="margin-top: 8px;">
+                                <button onclick="toggleFavorite('${spot.id}')" class="button secondary" style="padding: 4px 8px; font-size: 0.8rem; background: #f56565; color: white;">
+                                    ❌ Retirer
+                                </button>
+                                <button onclick="viewSpotForecast('${spot.id}')" class="button" style="padding: 4px 8px; font-size: 0.8rem;">
+                                    🌊 Prévisions
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            favoritesList.innerHTML = html;
+        }
+        
+        // Fonction pour voir les prévisions d'un spot (bonus)
+        function viewSpotForecast(spotId) {
+            showMessage('info', 'Redirection vers les prévisions du spot (à implémenter)');
+            // TODO: Rediriger vers l'onglet Météo avec ce spot pré-sélectionné
         }
 
         // ========================================
