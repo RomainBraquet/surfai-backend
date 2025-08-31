@@ -1450,75 +1450,110 @@
             }
         }
 
-        // Navigation spots onglet
-        async function updateSpotsNavigation() {
-            const country = document.getElementById('spots-country').value;
-            const region = document.getElementById('spots-region').value;
-            const city = document.getElementById('spots-city').value;
+       // Navigation spots onglet
+async function updateSpotsNavigation() {
+    const country = document.getElementById('spots-country').value;
+    const region = document.getElementById('spots-region').value;
+    const city = document.getElementById('spots-city').value;
+    
+    try {
+        const spots = await dataManager.getSpots();
+        
+        // Mettre à jour le menu Région si un pays est sélectionné
+        if (country && country !== "") {
+            const regionSelect = document.getElementById('spots-region');
+            regionSelect.innerHTML = '<option value="">Toutes les régions</option>';
             
-            try {
-                const spots = await dataManager.getSpots();
-                displayFilteredSpots(spots, country, region, city);
-            } catch (error) {
-                console.error('Erreur navigation spots:', error);
+            if (spots[country]) {
+                Object.keys(spots[country]).forEach(regionName => {
+                    regionSelect.innerHTML += `<option value="${regionName}">${regionName}</option>`;
+                });
+                // Restaurer la sélection actuelle si elle existe encore
+                if (region && spots[country][region]) {
+                    regionSelect.value = region;
+                }
             }
         }
-
-        function displayAllSpots(spotsHierarchy) {
-            const allSpotsList = document.getElementById('all-spots-list');
-            let html = '';
+        
+        // Mettre à jour le menu Ville si une région est sélectionnée
+        if (country && region && country !== "" && region !== "") {
+            const citySelect = document.getElementById('spots-city');
+            citySelect.innerHTML = '<option value="">Toutes les villes</option>';
             
-            Object.entries(spotsHierarchy).forEach(([country, regions]) => {
-                Object.entries(regions).forEach(([region, cities]) => {
-                    Object.entries(cities).forEach(([city, spots]) => {
-                        spots.forEach(spot => {
-                            html += `
-                                <div class="card">
-                                    <h4>🏄‍♂️ ${spot.name}</h4>
-                                    <p>📍 ${city}, ${region}, ${country}</p>
-                                    <p style="font-size: 0.9rem; color: #666;">
-                                        🖖 ${spot.type} • 💨 ${spot.difficulty}
-                                    </p>
-                                </div>
-                            `;
-                        });
-                    });
+            if (spots[country] && spots[country][region]) {
+                Object.keys(spots[country][region]).forEach(cityName => {
+                    citySelect.innerHTML += `<option value="${cityName}">${cityName}</option>`;
+                });
+                // Restaurer la sélection actuelle si elle existe encore
+                if (city && spots[country][region][city]) {
+                    citySelect.value = city;
+                }
+            }
+        }
+        
+        // Filtrer l'affichage des spots
+        displayFilteredSpots(spots, country, region, city);
+        
+    } catch (error) {
+        console.error('Erreur navigation spots:', error);
+    }
+}
+
+function displayAllSpots(spotsHierarchy) {
+    const allSpotsList = document.getElementById('all-spots-list');
+    let html = '';
+    
+    Object.entries(spotsHierarchy).forEach(([country, regions]) => {
+        Object.entries(regions).forEach(([region, cities]) => {
+            Object.entries(cities).forEach(([city, spots]) => {
+                spots.forEach(spot => {
+                    html += `
+                        <div class="card">
+                            <h4>🏄‍♂️ ${spot.name}</h4>
+                            <p>📍 ${city}, ${region}, ${country}</p>
+                            <p style="font-size: 0.9rem; color: #666;">
+                                🖖 ${spot.type} • 💨 ${spot.difficulty}
+                            </p>
+                        </div>
+                    `;
                 });
             });
-            
-            allSpotsList.innerHTML = html;
-        }
+        });
+    });
+    
+    allSpotsList.innerHTML = html;
+}
 
-        function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filterCity) {
-            const allSpotsList = document.getElementById('all-spots-list');
-            let html = '';
+function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filterCity) {
+    const allSpotsList = document.getElementById('all-spots-list');
+    let html = '';
+    
+    Object.entries(spotsHierarchy).forEach(([country, regions]) => {
+        if (filterCountry && country !== filterCountry) return;
+        
+        Object.entries(regions).forEach(([region, cities]) => {
+            if (filterRegion && region !== filterRegion) return;
             
-            Object.entries(spotsHierarchy).forEach(([country, regions]) => {
-                if (filterCountry && country !== filterCountry) return;
+            Object.entries(cities).forEach(([city, spots]) => {
+                if (filterCity && city !== filterCity) return;
                 
-                Object.entries(regions).forEach(([region, cities]) => {
-                    if (filterRegion && region !== filterRegion) return;
-                    
-                    Object.entries(cities).forEach(([city, spots]) => {
-                        if (filterCity && city !== filterCity) return;
-                        
-                        spots.forEach(spot => {
-                            html += `
-                                <div class="card">
-                                    <h4>🏄‍♂️ ${spot.name}</h4>
-                                    <p>📍 ${city}, ${region}, ${country}</p>
-                                    <p style="font-size: 0.9rem; color: #666;">
-                                        🖖 ${spot.type} • 💨 ${spot.difficulty}
-                                    </p>
-                                </div>
-                            `;
-                        });
-                    });
+                spots.forEach(spot => {
+                    html += `
+                        <div class="card">
+                            <h4>🏄‍♂️ ${spot.name}</h4>
+                            <p>📍 ${city}, ${region}, ${country}</p>
+                            <p style="font-size: 0.9rem; color: #666;">
+                                🖖 ${spot.type} • 💨 ${spot.difficulty}
+                            </p>
+                        </div>
+                    `;
                 });
             });
-            
-            allSpotsList.innerHTML = html || '<div class="card"><p>Aucun spot trouvé pour ces critères.</p></div>';
-        }
+        });
+    });
+    
+    allSpotsList.innerHTML = html || '<div class="card"><p>Aucun spot trouvé pour ces critères.</p></div>';
+}
 
         // ========================================
         // FONCTIONS MÉTÉO HARMONISÉES
