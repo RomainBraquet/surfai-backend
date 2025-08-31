@@ -54,6 +54,15 @@ try {
   console.log('❌ Erreur chargement routes IA:', error.message);
 }
 
+// Routes météo (NOUVEAU)
+let weatherRouter;
+try {
+  weatherRouter = require('./src/routes/weather');
+  console.log('✅ Routes météo chargées avec succès');
+} catch (error) {
+  console.log('❌ Erreur chargement routes météo:', error.message);
+}
+
 // ===== ROUTES DE BASE =====
 
 // Route de santé
@@ -171,7 +180,20 @@ if (aiPredictionsRouter) {
   });
   console.log('❌ Routes IA non disponibles - mock créé');
 }
-
+// Routes météo (NOUVEAU)
+if (weatherRouter) {
+  app.use('/api/v1/weather', weatherRouter);
+  console.log('✅ Routes météo montées sur /api/v1/weather');
+} else {
+  // Route mock pour météo si pas disponible
+  app.get('/api/v1/weather/test', (req, res) => {
+    res.json({
+      status: 'error',
+      message: 'Service météo non disponible - vérifiez le fichier routes/weather.js'
+    });
+  });
+  console.log('❌ Routes météo non disponibles - mock créé');
+}
 // ===== ROUTES DE TEST SPÉCIFIQUES =====
 
 // Test intégration complète
