@@ -1765,14 +1765,14 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
             
             // Récupérer les détails des spots séparément
             const spotIds = favorites.map(f => f.spot_id);
-            const { data: spots, error: spotsError } = await dataManager.supabase
+            const { data: spotsData, error: spotsError } = await dataManager.supabase
                 .from('spots')
                 .select('*')
                 .in('id', spotIds);
             
             if (spotsError) throw spotsError;
             
-            displayFavoriteSpots(spots || []);
+            displayFavoriteSpots(spotsData || []);
             
         } catch (error) {
             console.error('Erreur chargement favoris:', error);
