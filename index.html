@@ -415,25 +415,43 @@
                 </div>
             </div>
             
-            <!-- Navigation hiérarchique des spots -->
-<div class="form-group">
-    <label>Pays</label>
-    <select id="session-country" onchange="updateRegions()" required>
-        <option value="">Sélectionnez un pays</option>
-    </select>
-</div>
-<div class="form-group">
-    <label>Région</label>
-    <select id="session-region" onchange="updateSpots()" required>
-        <option value="">Sélectionnez une région</option>
-    </select>
-</div>
-<div class="form-group">
-    <label>Spot</label>
-    <select id="session-spot" required>
-        <option value="">Sélectionnez un spot</option>
-    </select>
-</div>
+            <!-- Sessions Tab -->
+            <div id="sessions" class="tab-panel">
+                <h2>🏄‍♂️ Mes Sessions</h2>
+                
+                <div class="card">
+                    <h3>➕ Ajouter une nouvelle session</h3>
+                    <div id="session-form">
+                        <div class="form-group">
+                            <label>Date de la session</label>
+                            <input type="date" id="session-date" required>
+                        </div>
+                        
+                        <!-- Navigation hiérarchique des spots -->
+                        <div class="form-group">
+                            <label>Pays</label>
+                            <select id="session-country" onchange="updateRegions()" required>
+                                <option value="">Sélectionnez un pays</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Région</label>
+                            <select id="session-region" onchange="updateCities()" required>
+                                <option value="">Sélectionnez une région</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ville</label>
+                            <select id="session-city" onchange="updateSpots()" required>
+                                <option value="">Sélectionnez une ville</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Spot</label>
+                            <select id="session-spot" required>
+                                <option value="">Sélectionnez un spot</option>
+                            </select>
+                        </div>
                         
                         <!-- Sélection board depuis profil -->
                         <div class="form-group">
@@ -926,7 +944,7 @@
                 if (this.supabase) {
                     try {
                         const { data: boards, error } = await this.supabase
-                            .from('boards')
+                            .from('user_boards')
                             .select('*')
                             .eq('user_id', userId)
                             .order('created_at', { ascending: false });
@@ -950,7 +968,7 @@
                 if (this.supabase) {
                     try {
                         const { data, error } = await this.supabase
-                            .from('boards')
+                            .from('user_boards')
                             .insert([{
                                 user_id: userId,
                                 name: board.name,
