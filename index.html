@@ -1730,7 +1730,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
             alert('Erreur: ' + error.message);
         } else {
             console.log('Succès:', data);
-            const message = data === 'added' ? 'Spot ajouté aux favoris !' : 'Spot retiré des favoris !';
+            const message = data === 'removed' ? 'Spot retiré des favoris !' : 'Spot ajouté aux favoris !';
             alert(message);
             
             // Recharger l'affichage des favoris
