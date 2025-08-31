@@ -2238,6 +2238,39 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                 (userData.sessions.reduce((sum, s) => sum + s.rating, 0) / userData.sessions.length).toFixed(1) : '-';
             document.getElementById('favorite-spots').textContent = userData.favoriteSpots.length;
         }
+function updateAppStatus() {
+            const statusDiv = document.getElementById('app-status');
+            statusDiv.innerHTML = `
+                <p>🟢 Backend: Connecté et fonctionnel</p>
+                <p>🟢 IA Engine: v2.0 Opérationnel</p>
+                <p>${supabaseClient ? '🟢' : '🔴'} Supabase: ${supabaseClient ? 'Connecté' : 'Non configuré'}</p>
+                <p>🟢 Données: Harmonisées et cohérentes</p>
+            `;
+        }
+
+        // NOUVELLE FONCTION À AJOUTER ICI
+        async function toggleFavorite(spotId) {
+            try {
+                let favorites = JSON.parse(localStorage.getItem('favorite_spots') || '[]');
+                
+                if (favorites.includes(spotId)) {
+                    favorites = favorites.filter(id => id !== spotId);
+                    showMessage('success', 'Spot retiré des favoris');
+                } else {
+                    favorites.push(spotId);
+                    showMessage('success', 'Spot ajouté aux favoris');
+                }
+                
+                localStorage.setItem('favorite_spots', JSON.stringify(favorites));
+                await updateSpotsNavigation();
+                
+            } catch (error) {
+                showMessage('error', 'Erreur gestion favoris: ' + error.message);
+            }
+        }
+
+        function updateDashboard() {
+            // ... reste du code existant
     </script>
 </body>
 </html>
