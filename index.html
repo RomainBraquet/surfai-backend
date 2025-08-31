@@ -1785,7 +1785,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
     }
 
         // Fonction pour afficher les spots favoris
-        function displayFavoriteSpots(favorites) {
+        function displayFavoriteSpots(spots) {
             const favoritesList = document.getElementById('favorite-spots-list');
             
             if (favorites.length === 0) {
@@ -1800,8 +1800,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
             
             let html = '<div class="card"><h4>⭐ Vos spots favoris</h4></div>';
             
-            favorites.forEach(fav => {
-                const spot = fav.spots;
+            favorites.forEach(spot => {
                 if (spot) {
                     html += `
                         <div class="card" style="border-left: 4px solid #48bb78;">
@@ -1822,7 +1821,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                     `;
                 }
             });
-            
+            console.log('HTML généré:', html);
             favoritesList.innerHTML = html;
         }
         
