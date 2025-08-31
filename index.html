@@ -836,9 +836,9 @@
                         name: spot.name,
                         coords: { lat: spot.lat, lng: spot.lng },
                         type: spot.bottom_type || 'sand',
-                        idealWind: this.parsePostgreSQLArray(spot.ideal_wind),
-                        idealSwell: this.parsePostgreSQLArray(spot.ideal_swell),
-                        idealTide: this.parsePostgreSQLArray(spot.ideal_tide),
+                        const idealWind = spot.ideal_wind || ['Variable'];
+                        const idealSwell = spot.ideal_swell || ['Variable'];
+                        const idealTide = spot.ideal_tide || ['Variable'];
                         isFavorite: false
                     });
                 });
