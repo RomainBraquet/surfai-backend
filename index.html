@@ -786,14 +786,18 @@
                 this.currentUserId = '3ba8ad73-e2c6-4971-8b32-5a123456789a';
             }
             parsePostgreSQLArray(pgArray) {
-                if (!pgArray) return null;
+                if (!pgArray) return ['Variable'];
                 if (Array.isArray(pgArray)) return pgArray;
                 
-                return pgArray.toString()
-                    .replace(/[{}]/g, '')
+                // PostgreSQL array format: {E,NE} ou {"E","NE"}
+                const cleaned = pgArray.toString()
+                    .replace(/[{}]/g, '')  // Enlever accolades
+                    .replace(/"/g, '')     // Enlever guillemets
                     .split(',')
                     .map(item => item.trim())
                     .filter(item => item.length > 0);
+                
+                return cleaned.length > 0 ? cleaned : ['Variable'];
             }
             // GESTION SPOTS
             async getSpots() {
@@ -836,9 +840,9 @@
                         name: spot.name,
                         coords: { lat: spot.lat, lng: spot.lng },
                         type: spot.bottom_type || 'sand',
-                        const idealWind = this.parsePostgreSQLArray(spot.ideal_wind);
-                        const idealSwell = this.parsePostgreSQLArray(spot.ideal_swell);
-                        const idealTide = this.parsePostgreSQLArray(spot.ideal_tide);
+                        const idealWind = spot.ideal_wind || ['Variable'];
+                        const idealSwell = spot.ideal_swell || ['Variable'];
+                        const idealTide = spot.ideal_tide || ['Variable'];
                         isFavorite: false
                     });
                 });
