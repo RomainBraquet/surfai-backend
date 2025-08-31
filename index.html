@@ -994,7 +994,283 @@
                 this.cache.boards = null;
                 return [newBoard];
             }
+            // 1. AJOUTEZ cette classe après votre SurfAIDataManager existant
+class MaritimeDataHarmonizer {
+    constructor() {
+        this.windDirections = {
+            'N': { full: 'Nord', angle: 0, emoji: '⬆️' },
+            'NE': { full: 'Nord-Est', angle: 45, emoji: '↗️' },
+            'E': { full: 'Est', angle: 90, emoji: '➡️' },
+            'SE': { full: 'Sud-Est', angle: 135, emoji: '↘️' },
+            'S': { full: 'Sud', angle: 180, emoji: '⬇️' },
+            'SW': { full: 'Sud-Ouest', angle: 225, emoji: '↙️' },
+            'W': { full: 'Ouest', angle: 270, emoji: '⬅️' },
+            'NW': { full: 'Nord-Ouest', angle: 315, emoji: '↖️' }
+        };
+        
+        this.tideStates = {
+            'low': { label: 'Marée basse', short: 'MB', emoji: '🌊' },
+            'mid_rising': { label: 'Mi-marée montante', short: 'MM+', emoji: '🌊↗️' },
+            'high': { label: 'Marée haute', short: 'MH', emoji: '🌊🔝' },
+            'mid_falling': { label: 'Mi-marée descendante', short: 'MM-', emoji: '🌊↘️' },
+            'mid': { label: 'Mi-marée', short: 'MM', emoji: '🌊' }
+        };
+    }
 
+    // Harmoniser les données météo
+    harmonizeWeatherData(rawData) {
+        return {
+            waveHeight: this.normalizeWaveHeight(rawData.waveHeight),
+            wavePeriod: this.normalizeWavePeriod(rawData.wavePeriod),
+            windSpeed: this.normalizeWindSpeed(rawData.windSpeed),
+            windDirection: this.normalizeWindDirection(rawData.windDirection),
+            tideState: this.normalizeTideState(rawData.tide),
+            tideCoefficient: this.normalizeTideCoefficient(rawData.tideCoefficient),
+            waterTemp: this.normalizeWaterTemp(rawData.waterTemp),
+            confidence: rawData.confidence || 0.7
+        };
+    }
+
+    normalizeWaveHeight(value) {
+        const numValue = parseFloat(value) || 1.0;
+        const clampedValue = Math.max(0, Math.min(15, numValue));
+        
+        return {
+            value: Math.round(clampedValue * 10) / 10,
+            display: `${(Math.round(clampedValue * 10) / 10).toFixed(1)}m`,
+            category: this.categorizeWaveHeight(clampedValue)
+        };
+    }
+
+    normalizeWavePeriod(value) {
+        const numValue = parseFloat(value) || (8 + Math.random() * 8);
+        const clampedValue = Math.max(3, Math.min(25, numValue));
+        
+        return {
+            value: Math.round(clampedValue),
+            display: `${Math.round(clampedValue)}s`,
+            category: this.categorizeWavePeriod(clampedValue)
+        };
+    }
+
+    normalizeWindSpeed(value) {
+        let numValue = parseFloat(value) || 15;
+        // Convertir noeuds en km/h si nécessaire
+        if (numValue < 40 && numValue > 0) {
+            numValue = numValue * 1.852;
+        }
+        const clampedValue = Math.max(0, Math.min(200, numValue));
+        
+        return {
+            value: Math.round(clampedValue),
+            display: `${Math.round(clampedValue)} km/h`,
+            category: this.categorizeWindSpeed(clampedValue)
+        };
+    }
+
+    normalizeWindDirection(value) {
+        const direction = (value || 'W').toString().toUpperCase();
+        const directionInfo = this.windDirections[direction] || this.windDirections['W'];
+        
+        return {
+            value: direction,
+            full: directionInfo.full,
+            display: direction,
+            emoji: directionInfo.emoji
+        };
+    }
+
+    normalizeTideState(value) {
+        const stateKey = (value || 'mid').toString().toLowerCase();
+        return this.tideStates[stateKey] || this.tideStates['mid'];
+    }
+
+    normalizeTideCoefficient(value) {
+        const numValue = parseFloat(value) || (60 + Math.random() * 40);
+        const clampedValue = Math.max(20, Math.min(120, numValue));
+        
+        return {
+            value: Math.round(clampedValue),
+            display: Math.round(clampedValue).toString(),
+            category: this.categorizeTideCoefficient(clampedValue)
+        };
+    }
+
+    normalizeWaterTemp(value) {
+        const numValue = parseFloat(value) || (13 + Math.random() * 8);
+        const clampedValue = Math.max(-2, Math.min(35, numValue));
+        
+        return {
+            value: Math.round(clampedValue * 10) / 10,
+            display: `${(Math.round(clampedValue * 10) / 10).toFixed(1)}°C`,
+            comfort: this.categorizeWaterTemp(clampedValue)
+        };
+    }
+
+    categorizeWaveHeight(height) {
+        if (height < 0.5) return 'Micro vagues';
+        if (height < 1.0) return 'Petites vagues';
+        if (height < 1.5) return 'Vagues correctes';
+        if (height < 2.5) return 'Bonnes vagues';
+        if (height < 4.0) return 'Grosses vagues';
+        return 'Vagues énormes';
+    }
+
+    categorizeWindSpeed(speed) {
+        if (speed < 5) return 'Calme';
+        if (speed < 15) return 'Léger';
+        if (speed < 25) return 'Modéré';
+        if (speed < 40) return 'Fort';
+        return 'Très fort';
+    }
+
+    categorizeWavePeriod(period) {
+        if (period < 8) return 'Courte période';
+        if (period < 12) return 'Période moyenne';
+        return 'Longue période';
+    }
+
+    categorizeWaterTemp(temp) {
+        if (temp < 12) return 'Très froide';
+        if (temp < 16) return 'Froide';
+        if (temp < 20) return 'Fraîche';
+        if (temp < 24) return 'Agréable';
+        return 'Chaude';
+    }
+
+    categorizeTideCoefficient(coeff) {
+        if (coeff < 45) return 'Morte-eau';
+        if (coeff < 70) return 'Faible';
+        if (coeff < 95) return 'Moyen';
+        if (coeff < 110) return 'Fort';
+        return 'Vive-eau';
+    }
+}
+
+// 2. AJOUTEZ cette variable globale après vos autres variables globales
+let maritimeHarmonizer = null;
+
+// 3. INITIALISEZ l'harmoniseur dans votre fonction loadHarmonizedData existante
+// AJOUTEZ cette ligne au début de loadHarmonizedData() :
+maritimeHarmonizer = new MaritimeDataHarmonizer();
+console.log('✅ Harmoniseur maritime initialisé');
+
+// 4. REMPLACEZ votre fonction getIntelligentForecast() par celle-ci :
+async function getIntelligentForecast() {
+    const spotId = document.getElementById('forecast-spot').value;
+    const level = document.getElementById('forecast-level').value;
+    const boardId = document.getElementById('forecast-board').value;
+    const forecastGrid = document.getElementById('forecast-grid');
+    
+    if (!spotId) {
+        showMessage('error', 'Veuillez sélectionner un spot');
+        return;
+    }
+    
+    forecastGrid.innerHTML = '<div class="loading">🌊 Récupération prévisions harmonisées...</div>';
+    
+    try {
+        // Utiliser VOTRE logique backend existante qui fonctionne
+        const prediction = await dataManager.getPersonalizedPrediction(
+            dataManager.currentUserId, 
+            spotId, 
+            boardId
+        );
+        
+        // Harmoniser SEULEMENT l'affichage
+        if (maritimeHarmonizer && prediction.weather) {
+            const harmonizedWeather = maritimeHarmonizer.harmonizeWeatherData(prediction.weather);
+            displayHarmonizedPersonalizedForecast(prediction, harmonizedWeather, level);
+        } else {
+            // Fallback vers votre affichage original
+            displayPersonalizedForecast(prediction, level);
+        }
+        
+    } catch (error) {
+        console.error('Erreur prévisions:', error);
+        forecastGrid.innerHTML = `
+            <div class="error">
+                ❌ Erreur: ${error.message}<br>
+                Impossible de récupérer les prévisions.
+            </div>
+        `;
+    }
+}
+
+// 5. AJOUTEZ cette nouvelle fonction d'affichage harmonisée :
+function displayHarmonizedPersonalizedForecast(prediction, harmonizedWeather, level) {
+    const forecastGrid = document.getElementById('forecast-grid');
+    const score = prediction.score;
+    
+    let cardClass = 'forecast-card';
+    let scoreClass = 'forecast-score';
+    
+    if (score >= 8) {
+        cardClass += ' excellent';
+        scoreClass += ' excellent';
+    } else if (score >= 6) {
+        cardClass += ' good';  
+        scoreClass += ' good';
+    } else {
+        cardClass += ' average';
+        scoreClass += ' average';
+    }
+    
+    const spot = document.getElementById('forecast-spot').selectedOptions[0]?.text || 'Spot sélectionné';
+    const board = document.getElementById('forecast-board').selectedOptions[0]?.text || 'Aucune board';
+    
+    forecastGrid.innerHTML = `
+        <div class="card" style="margin-bottom: 15px; background: linear-gradient(45deg, #f0fff4, #ffffff); border-left: 4px solid #48bb78;">
+            <h4>🧠 Prédiction IA Harmonisée</h4>
+            <p><strong>Données complètes avec période et coefficient de marée</strong></p>
+        </div>
+        
+        <div class="${cardClass}">
+            <div class="forecast-header">
+                <span class="forecast-date">📍 ${spot} - Maintenant</span>
+                <span class="${scoreClass}">${score.toFixed(1)}/10</span>
+            </div>
+            
+            <div class="forecast-conditions" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                <div class="condition">🌊 <strong>${harmonizedWeather.waveHeight.display}</strong></div>
+                <div class="condition">⏱️ <strong>${harmonizedWeather.wavePeriod.display}</strong></div>
+                <div class="condition">💨 <strong>${harmonizedWeather.windSpeed.display}</strong></div>
+                <div class="condition">${harmonizedWeather.windDirection.emoji} <strong>${harmonizedWeather.windDirection.display}</strong></div>
+                <div class="condition">🌡️ <strong>${harmonizedWeather.waterTemp.display}</strong></div>
+                <div class="condition">📊 <strong>Coeff ${harmonizedWeather.tideCoefficient.display}</strong></div>
+                <div class="condition">${harmonizedWeather.tideState.emoji} <strong>${harmonizedWeather.tideState.label}</strong></div>
+                <div class="condition">📈 <strong>${Math.round(harmonizedWeather.confidence * 100)}% fiable</strong></div>
+            </div>
+            
+            <div class="prediction-info">
+                <div class="prediction-recommendation">
+                    ${prediction.recommendation}
+                </div>
+                <div style="margin-top: 10px; padding: 8px; background: #f0f8ff; border-radius: 6px;">
+                    <strong>Analyse harmonisée complète:</strong><br>
+                    ${harmonizedWeather.waveHeight.category} (${harmonizedWeather.waveHeight.display}) • 
+                    ${harmonizedWeather.wavePeriod.category} (${harmonizedWeather.wavePeriod.display}) • 
+                    Vent ${harmonizedWeather.windSpeed.category} • 
+                    Marée ${harmonizedWeather.tideCoefficient.category} • 
+                    Eau ${harmonizedWeather.waterTemp.comfort}
+                </div>
+                <div style="margin-top: 8px; font-size: 0.8rem; color: #666;">
+                    <strong>Board:</strong> ${board} • <strong>Niveau:</strong> ${level}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" style="background: #f8fafc; margin-top: 15px;">
+            <h4>🎯 Nouvelles données harmonisées</h4>
+            <ul style="margin-left: 20px; font-size: 0.9rem;">
+                <li>⏱️ Période des vagues : ${harmonizedWeather.wavePeriod.display} (${harmonizedWeather.wavePeriod.category})</li>
+                <li>📊 Coefficient de marée : ${harmonizedWeather.tideCoefficient.display} (${harmonizedWeather.tideCoefficient.category})</li>
+                <li>🌊 État de marée : ${harmonizedWeather.tideState.label}</li>
+                <li>🌡️ Température eau : ${harmonizedWeather.waterTemp.display} (${harmonizedWeather.waterTemp.comfort})</li>
+            </ul>
+        </div>
+    `;
+}
             // PRÉDICTIONS PERSONNALISÉES
             async getPersonalizedPrediction(userId, spotId, boardId = null) {
                 try {
