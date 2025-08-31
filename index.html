@@ -1758,7 +1758,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
             
             if (error) throw error;
             
-            if (favorites.length === 0) {
+            if (spots.length === 0) {
                 displayFavoriteSpots([]);
                 return;
             }
@@ -1786,44 +1786,44 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
 
         // Fonction pour afficher les spots favoris
         function displayFavoriteSpots(spots) {
-            const favoritesList = document.getElementById('favorite-spots-list');
-            
-            if (favorites.length === 0) {
-                favoritesList.innerHTML = `
-                    <div class="card">
-                        <h4>⭐ Vos spots favoris</h4>
-                        <p>Aucun spot favori pour le moment. Ajoutez vos spots préférés depuis la liste ci-dessous !</p>
+    const favoritesList = document.getElementById('favorite-spots-list');
+    
+    if (spots.length === 0) {  // <-- Changé ici
+        favoritesList.innerHTML = `
+            <div class="card">
+                <h4>⭐ Vos spots favoris</h4>
+                <p>Aucun spot favori pour le moment. Ajoutez vos spots préférés depuis la liste ci-dessous !</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="card"><h4>⭐ Vos spots favoris</h4></div>';
+    
+    spots.forEach(spot => {  // <-- Changé ici aussi
+        if (spot) {
+            html += `
+                <div class="card" style="border-left: 4px solid #48bb78;">
+                    <h4>🏄‍♂️ ${spot.name}</h4>
+                    <p>📍 ${spot.city}, ${spot.region}, ${spot.country}</p>
+                    <p style="font-size: 0.9rem; color: #666;">
+                        🏖️ ${spot.bottom_type} • 💨 Vent: ${Array.isArray(spot.ideal_wind) && spot.ideal_wind.length > 0 ? spot.ideal_wind.join('/') : 'Variable'} • 🌊 Houle: ${Array.isArray(spot.ideal_swell) && spot.ideal_swell.length > 0 ? spot.ideal_swell.join('/') : 'Variable'} • 🌊 Marée: ${Array.isArray(spot.ideal_tide) && spot.ideal_tide.length > 0 ? spot.ideal_tide.join('/') : 'Variable'}
+                    </p>
+                    <div style="margin-top: 8px;">
+                        <button onclick="toggleFavorite('${spot.id}')" class="button secondary" style="padding: 4px 8px; font-size: 0.8rem; background: #f56565; color: white;">
+                            ❌ Retirer
+                        </button>
+                        <button onclick="viewSpotForecast('${spot.id}')" class="button" style="padding: 4px 8px; font-size: 0.8rem;">
+                            🌊 Prévisions
+                        </button>
                     </div>
-                `;
-                return;
-            }
-            
-            let html = '<div class="card"><h4>⭐ Vos spots favoris</h4></div>';
-            
-            favorites.forEach(spot => {
-                if (spot) {
-                    html += `
-                        <div class="card" style="border-left: 4px solid #48bb78;">
-                            <h4>🏄‍♂️ ${spot.name}</h4>
-                            <p>📍 ${spot.city}, ${spot.region}, ${spot.country}</p>
-                            <p style="font-size: 0.9rem; color: #666;">
-                                🏖️ ${spot.bottom_type} • 💨 Vent: ${Array.isArray(spot.ideal_wind) && spot.ideal_wind.length > 0 ? spot.ideal_wind.join('/') : 'Variable'} • 🌊 Houle: ${Array.isArray(spot.ideal_swell) && spot.ideal_swell.length > 0 ? spot.ideal_swell.join('/') : 'Variable'} • 🌊 Marée: ${Array.isArray(spot.ideal_tide) && spot.ideal_tide.length > 0 ? spot.ideal_tide.join('/') : 'Variable'}
-                            </p>
-                            <div style="margin-top: 8px;">
-                                <button onclick="toggleFavorite('${spot.id}')" class="button secondary" style="padding: 4px 8px; font-size: 0.8rem; background: #f56565; color: white;">
-                                    ❌ Retirer
-                                </button>
-                                <button onclick="viewSpotForecast('${spot.id}')" class="button" style="padding: 4px 8px; font-size: 0.8rem;">
-                                    🌊 Prévisions
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-            console.log('HTML généré:', html);
-            favoritesList.innerHTML = html;
+                </div>
+            `;
         }
+    });
+    
+    favoritesList.innerHTML = html;
+}
         
         // Fonction pour voir les prévisions d'un spot (bonus)
         function viewSpotForecast(spotId) {
