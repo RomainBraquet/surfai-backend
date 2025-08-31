@@ -822,12 +822,16 @@
                     if (!hierarchy[spot.country][spot.region]) hierarchy[spot.country][spot.region] = {};
                     if (!hierarchy[spot.country][spot.region][spot.city]) hierarchy[spot.country][spot.region][spot.city] = [];
                     
-                    hierarchy[spot.country][spot.region][spot.city].push({
+                    hierarchy[country][region][city].push({
                         id: spot.id,
                         name: spot.name,
-                        coords: spot.coordinates,
-                        type: spot.type,
-                        difficulty: spot.difficulty
+                        coords: { lat: spot.lat, lng: spot.lng },
+                        type: spot.bottom_type || 'sand',
+                        difficulty: spot.ideal_wind || ['E'],
+                        idealWind: spot.ideal_wind,
+                        idealSwell: spot.ideal_swell,
+                        idealTide: spot.ideal_tide,
+                        isFavorite: false
                     });
                 });
                 return hierarchy;
@@ -1512,8 +1516,13 @@ function displayAllSpots(spotsHierarchy) {
                             <h4>🏄‍♂️ ${spot.name}</h4>
                             <p>📍 ${city}, ${region}, ${country}</p>
                             <p style="font-size: 0.9rem; color: #666;">
-                                🖖 ${spot.type} • 💨 ${spot.difficulty}
+                                🏖️ ${spot.type} • 💨 ${spot.idealWind ? spot.idealWind.join('/') : 'Variable'} • 🌊 ${spot.idealSwell ? spot.idealSwell.join('/') : 'Variable'}
                             </p>
+                            <div style="margin-top: 8px;">
+                                <button onclick="toggleFavorite('${spot.id}')" class="button secondary" style="padding: 4px 8px; font-size: 0.8rem;">
+                                    ${spot.isFavorite ? '⭐ Retirer' : '⭐ Favoris'}
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
