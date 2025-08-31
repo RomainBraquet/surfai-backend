@@ -712,7 +712,7 @@
                             </select>
                         </div>
                     </div>
-                    <button class="button" onclick="getIntelligentForecast()">🌊 Récupérer prévisions IA</button>
+                    <button class="button" onclick="getIntelligentForecast()">🌊 Récupérer prévisions harmonisées</button>
                     <div id="forecast-result">
                         <div class="forecast-grid" id="forecast-grid"></div>
                     </div>
@@ -1151,7 +1151,6 @@ class MaritimeDataHarmonizer {
 let maritimeHarmonizer = null;
 
 // 3. INITIALISEZ l'harmoniseur dans votre fonction loadHarmonizedData existante
-// AJOUTEZ cette ligne au début de loadHarmonizedData() :
 maritimeHarmonizer = new MaritimeDataHarmonizer();
 console.log('✅ Harmoniseur maritime initialisé');
 
