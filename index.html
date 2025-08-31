@@ -1524,13 +1524,13 @@ function displayAllSpots(spotsHierarchy) {
                             <h4>🏄‍♂️ ${spot.name}</h4>
                             <p>📍 ${city}, ${region}, ${country}</p>
                             <p style="font-size: 0.9rem; color: #666;">
-                                🏖️ ${spot.type} • 💨 Vent: ${spot.idealWind && spot.idealWind.length > 0 ? spot.idealWind.join('/') : 'Variable'} • 🌊 Houle: ${spot.idealSwell && spot.idealSwell.length > 0 ? spot.idealSwell.join('/') : 'Variable'} • 🌊 Marée: ${spot.idealTide && spot.idealTide.length > 0 ? spot.idealTide.join('/') : 'Variable'} • 🌊 Houle: ${spot.idealSwell ? spot.idealSwell.join('/') : 'Variable'} • 🌊 Marée: ${spot.idealTide ? spot.idealTide.join('/') : 'Variable'}
-                                </p>
-                                <div style="margin-top: 8px;">
-                                    <button onclick="toggleFavorite('${spot.id}')" class="button secondary" style="padding: 4px 8px; font-size: 0.8rem;">
-                                        ⭐ Ajouter aux favoris
-                                    </button>
-                                </div>
+                                🏖️ ${spot.type} • 💨 Vent: ${spot.idealWind && spot.idealWind.length > 0 ? spot.idealWind.join('/') : 'Variable'} • 🌊 Houle: ${spot.idealSwell && spot.idealSwell.length > 0 ? spot.idealSwell.join('/') : 'Variable'} • 🌊 Marée: ${spot.idealTide && spot.idealTide.length > 0 ? spot.idealTide.join('/') : 'Variable'}
+                            </p>
+                            <div style="margin-top: 8px;">
+                                <button onclick="toggleFavorite('${spot.id}')" class="button secondary" style="padding: 4px 8px; font-size: 0.8rem;">
+                                    ⭐ Ajouter aux favoris
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
@@ -1539,6 +1539,42 @@ function displayAllSpots(spotsHierarchy) {
     });
     
     allSpotsList.innerHTML = html;
+}
+
+function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filterCity) {
+    const allSpotsList = document.getElementById('all-spots-list');
+    let html = '';
+    
+    Object.entries(spotsHierarchy).forEach(([country, regions]) => {
+        if (filterCountry && country !== filterCountry) return;
+        
+        Object.entries(regions).forEach(([region, cities]) => {
+            if (filterRegion && region !== filterRegion) return;
+            
+            Object.entries(cities).forEach(([city, spots]) => {
+                if (filterCity && city !== filterCity) return;
+                
+                spots.forEach(spot => {
+                    html += `
+                        <div class="card">
+                            <h4>🏄‍♂️ ${spot.name}</h4>
+                            <p>📍 ${city}, ${region}, ${country}</p>
+                            <p style="font-size: 0.9rem; color: #666;">
+                                🏖️ ${spot.type} • 💨 Vent: ${spot.idealWind && spot.idealWind.length > 0 ? spot.idealWind.join('/') : 'Variable'} • 🌊 Houle: ${spot.idealSwell && spot.idealSwell.length > 0 ? spot.idealSwell.join('/') : 'Variable'} • 🌊 Marée: ${spot.idealTide && spot.idealTide.length > 0 ? spot.idealTide.join('/') : 'Variable'}
+                            </p>
+                            <div style="margin-top: 8px;">
+                                <button onclick="toggleFavorite('${spot.id}')" class="button secondary" style="padding: 4px 8px; font-size: 0.8rem;">
+                                    ⭐ Ajouter aux favoris
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        });
+    });
+    
+    allSpotsList.innerHTML = html || '<div class="card"><p>Aucun spot trouvé pour ces critères.</p></div>';
 }
 
 function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filterCity) {
