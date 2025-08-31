@@ -1722,60 +1722,29 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
 
         // Fonction pour gérer les spots favoris
         async function toggleFavorite(spotId) {
-            if (!dataManager.supabase) {
-                showMessage('error', 'Connexion Supabase requise pour les favoris');
-                return;
-            }
+    try {
+        const { data, error } = await dataManager.supabase.rpc('toggle_favorite', {
+            p_user_id: dataManager.currentUserId,
+            p_spot_id: spotId
+        });
+        
+        if (error) {
+            console.error('Erreur:', error);
+            alert('Erreur: ' + error.message);
+        } else {
+            console.log('Succès:', data);
+            const message = data === 'added' ? 'Spot ajouté aux favoris !' : 'Spot retiré des favoris !';
+            alert(message);
             
-            try {
-                const userId = dataManager.currentUserId;
-                
-                // Vérifier si le spot est déjà en favori
-                const { data: existing, error: checkError } = await dataManager.supabase
-                    .from('favorite_spots')
-                    .select('id')
-                    .eq('user_id', userId)
-                    .eq('spot_id', spotId)
-                    .single();
-                
-                if (checkError && checkError.code !== 'PGRST116') {
-                    throw checkError;
-                }
-                
-                if (existing) {
-                    // Retirer des favoris
-                    const { error: deleteError } = await dataManager.supabase
-                        .from('favorite_spots')
-                        .delete()
-                        .eq('user_id', userId)
-                        .eq('spot_id', spotId);
-                    
-                    if (deleteError) throw deleteError;
-                    
-                    showMessage('success', 'Spot retiré des favoris');
-                } else {
-                    // Ajouter aux favoris
-                    const { error: insertError } = await dataManager.supabase
-                        .from('favorite_spots')
-                        .insert([{
-                            user_id: userId,
-                            spot_id: spotId
-                        }]);
-                    
-                    if (insertError) throw insertError;
-                    
-                    showMessage('success', 'Spot ajouté aux favoris');
-                }
-                
-                // Recharger les spots pour mettre à jour l'affichage
-                await loadFavoriteSpots();
-                await loadSpotsHierarchy();
-                
-            } catch (error) {
-                console.error('Erreur gestion favoris:', error);
-                showMessage('error', `Erreur: ${error.message}`);
-            }
+            // Recharger l'affichage des favoris
+            await loadFavoriteSpots();
         }
+        
+    } catch (err) {
+        console.error('Erreur catch:', err);
+        alert('Erreur: ' + err.message);
+    }
+}
         
         // Fonction pour charger les spots favoris
         async function loadFavoriteSpots() {
