@@ -2148,16 +2148,10 @@
             dataManager = new SurfAIDataManager(backendUrl, null);
             
             // Connecter Supabase et réinitialiser dataManager
-            if (savedSupabaseUrl && savedSupabaseKey) {
-                console.log('Auto-connexion Supabase...');
-                await testSupabaseConnection();
-            } else {
-                // Utiliser la connexion Supabase de l'authentification
-                if (supabaseAuth) {
-                    dataManager.supabase = supabaseAuth;
-                    dataManager.currentUserId = '3ba8ad73-e2c6-4971-8b32-5a123456789a';
-                    console.log('DataManager connecté avec supabaseAuth');
-                }
+            if (supabaseAuth) {
+                dataManager.supabase = supabaseAuth;
+                dataManager.currentUserId = '3ba8ad73-e2c6-4971-8b32-5a123456789a';
+                console.log('DataManager connecté avec supabaseAuth');
             }
             
             console.log('Gestionnaire centralisé initialisé');
