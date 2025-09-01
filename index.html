@@ -1264,51 +1264,34 @@ currentUser = data.user;
             }
                 
                 async function updateSurfLevel() {
-                console.log('updateSurfLevel appelée');
-                
-                // Vérification des variables d'authentification
                 if (!currentUser || !supabaseAuth) {
-                    console.error('currentUser ou supabaseAuth manquant');
                     showMessage('profiles', 'error', 'Erreur: utilisateur non connecté');
                     return;
                 }
                 
-                // Vérification que l'élément HTML existe
-                const levelElement = document.getElementById('profiles-surf-level');
-                if (!levelElement) {
-                    console.error('Élément profiles-surf-level non trouvé');
-                    showMessage('profiles', 'error', 'Erreur: élément de niveau non trouvé');
-                    return;
-                }
-                
-                const level = levelElement.value;
-                
-                // Vérification que la valeur n'est pas vide
-                if (!level) {
-                    showMessage('profiles', 'error', 'Veuillez sélectionner un niveau');
-                    return;
-                }
-                
-                console.log('Mise à jour niveau:', level, 'pour utilisateur:', currentUser.id);
+                const level = document.getElementById('profiles-surf-level').value;
                 
                 try {
-                    const { error } = await supabaseAuth.from('profiles')
+                    const result = await supabaseAuth.from('profiles')
                         .update({ 
                             surf_level: level,
                             updated_at: new Date().toISOString() 
                         })
-                        .eq('id', currentUser.id);
+                        .eq('id', currentUser.id)
+                        .select();
                     
-                    if (error) {
-                        console.error('Erreur Supabase surf_level:', error);
-                        throw error;
+                    if (result.error) {
+                        throw result.error;
                     }
                     
-                    console.log('Niveau de surf mis à jour avec succès');
+                    if (result.data.length === 0) {
+                        throw new Error('Profil non trouvé');
+                    }
+                    
                     showMessage('profiles', 'success', 'Niveau de surf mis à jour !');
                     
                 } catch (error) {
-                    console.error('Erreur mise à jour niveau:', error);
+                    console.error('Erreur:', error);
                     showMessage('profiles', 'error', `Erreur: ${error.message}`);
                 }
             }
