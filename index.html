@@ -1539,7 +1539,6 @@ currentUser = data.user;
                     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpzc2lxcHhscXNoc21ocHFqemdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTY5MzgsImV4cCI6MjA2MDYzMjkzOH0.H7tpOyc-iFCQLf4eHOMfJ0T09NvpHy_6kw2onaiJJcw';
                     
                     supabaseAuth = window.supabase.createClient(supabaseUrl, supabaseKey);
-                    window.supabaseAuth = supabaseAuth;
                     console.log('Supabase initialisé pour authentification');
 
                     // Créer un dataManager simple pour compatibilité
@@ -2108,6 +2107,8 @@ currentUser = data.user;
         // ========================================
         let backendUrl = 'https://surfai-backend-production.up.railway.app';
         let backendApiKey = null;
+        let supabaseAuth = null;
+        let currentUser = null;
         let supabaseClient = null;
         let dataManager = null;
         let userData = {
