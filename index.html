@@ -1264,9 +1264,32 @@ currentUser = data.user;
             }
                 
                 async function updateSurfLevel() {
-                if (!currentUser || !supabaseAuth) return;
+                console.log('updateSurfLevel appelée');
                 
-                const level = document.getElementById('profiles-surf-level').value;
+                // Vérification des variables d'authentification
+                if (!currentUser || !supabaseAuth) {
+                    console.error('currentUser ou supabaseAuth manquant');
+                    showMessage('profiles', 'error', 'Erreur: utilisateur non connecté');
+                    return;
+                }
+                
+                // Vérification que l'élément HTML existe
+                const levelElement = document.getElementById('profiles-surf-level');
+                if (!levelElement) {
+                    console.error('Élément profiles-surf-level non trouvé');
+                    showMessage('profiles', 'error', 'Erreur: élément de niveau non trouvé');
+                    return;
+                }
+                
+                const level = levelElement.value;
+                
+                // Vérification que la valeur n'est pas vide
+                if (!level) {
+                    showMessage('profiles', 'error', 'Veuillez sélectionner un niveau');
+                    return;
+                }
+                
+                console.log('Mise à jour niveau:', level, 'pour utilisateur:', currentUser.id);
                 
                 try {
                     const { error } = await supabaseAuth.from('profiles')
@@ -1276,13 +1299,17 @@ currentUser = data.user;
                         })
                         .eq('id', currentUser.id);
                     
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Erreur Supabase surf_level:', error);
+                        throw error;
+                    }
                     
-                    showMessage('profile', 'success', 'Niveau de surf mis à jour !');
+                    console.log('Niveau de surf mis à jour avec succès');
+                    showMessage('profiles', 'success', 'Niveau de surf mis à jour !');
                     
                 } catch (error) {
                     console.error('Erreur mise à jour niveau:', error);
-                    showMessage('profile', 'error', `Erreur: ${error.message}`);
+                    showMessage('profiles', 'error', `Erreur: ${error.message}`);
                 }
             }
                 
