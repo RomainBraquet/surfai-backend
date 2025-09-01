@@ -1833,7 +1833,7 @@
                 if (this.supabase) {
                     try {
                         const { data: profiles, error } = await this.supabase
-                            .from('user_profiless')
+                            .from('user_profiles')
                             .select('*')
                             .eq('user_id', userId)
                             .single();
