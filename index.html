@@ -384,7 +384,7 @@
                 display: block;
             }
             
-            .profile-container {
+            .profiles-container {
                 background: white;
                 border-radius: 12px;
                 padding: 30px;
@@ -440,7 +440,7 @@
             <button class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
             <button class="nav-tab" onclick="showTab('sessions')">🏄‍♂️ Sessions</button>
             <button class="nav-tab" onclick="showTab('spots')">📍 Spots</button>
-            <button class="nav-tab" onclick="showAuthOrProfile()">👤 Profile</button>
+            <button class="nav-tab" onclick="showAuthOrprofiles()">👤 profiles</button>
             <button class="nav-tab" onclick="showTab('predictions')">🎯 Prédictions</button>
             <button class="nav-tab" onclick="showTab('meteo')">🌊 Météo</button>
             <button class="nav-tab" onclick="showTab('config')">⚙️ Configuration</button>
@@ -609,8 +609,8 @@
                 </div>
             </div>
             
-            <!-- Profile Tab - Version complète selon spécifications -->
-            <div id="profile" class="tab-panel">
+            <!-- profiles Tab - Version complète selon spécifications -->
+            <div id="profiles" class="tab-panel">
                 <!-- Section Authentification (visible si non connecté) -->
                 <div id="auth-section" class="auth-container">
                     <h2>Connexion & Inscription</h2>
@@ -679,13 +679,13 @@
                 </div>
                 
                 <!-- Section Profil (visible si connecté) -->
-                <div id="profile-section" class="profile-container hidden">
+                <div id="profiles-section" class="profiles-container hidden">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h2>Mon Profil</h2>
                         <button onclick="handleLogout()" class="button secondary">Déconnexion</button>
                     </div>
                     
-                    <!-- 1. MODIFIER MON PROFILE -->
+                    <!-- 1. MODIFIER MON profiles -->
                     <div class="card">
                         <h3>Modifier mon profil</h3>
                         
@@ -702,9 +702,9 @@
                                 <input type="file" id="avatar-input" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)">
                             </div>
                             <div>
-                                <h4 id="profile-display-name" style="color: #667eea; margin-bottom: 5px;">Utilisateur SurfAI</h4>
-                                <div id="profile-display-email" style="color: #666; font-size: 0.9rem;">email@example.com</div>
-                                <div id="profile-verification-status" style="display: inline-block; padding: 4px 8px; border-radius: 12px; 
+                                <h4 id="profiles-display-name" style="color: #667eea; margin-bottom: 5px;">Utilisateur SurfAI</h4>
+                                <div id="profiles-display-email" style="color: #666; font-size: 0.9rem;">email@example.com</div>
+                                <div id="profiles-verification-status" style="display: inline-block; padding: 4px 8px; border-radius: 12px; 
                                      font-size: 0.8rem; font-weight: 600; margin-top: 5px; background: #fed7d7; color: #c53030;">
                                     Email non vérifié
                                 </div>
@@ -715,11 +715,11 @@
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
                             <div class="form-group">
                                 <label>Email</label>
-                                <input type="email" id="profile-email" placeholder="votre@email.com">
+                                <input type="email" id="profiles-email" placeholder="votre@email.com">
                             </div>
                             <div class="form-group">
                                 <label>Pseudo</label>
-                                <input type="text" id="profile-nickname" placeholder="Votre pseudo de surfeur">
+                                <input type="text" id="profiles-nickname" placeholder="Votre pseudo de surfeur">
                             </div>
                         </div>
                         
@@ -727,15 +727,15 @@
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
                             <div class="form-group">
                                 <label>Nouveau mot de passe</label>
-                                <input type="password" id="profile-new-password" placeholder="••••••••">
+                                <input type="password" id="profiles-new-password" placeholder="••••••••">
                             </div>
                             <div class="form-group">
                                 <label>Confirmer nouveau mot de passe</label>
-                                <input type="password" id="profile-new-password-confirm" placeholder="••••••••">
+                                <input type="password" id="profiles-new-password-confirm" placeholder="••••••••">
                             </div>
                         </div>
                         
-                        <button onclick="updateProfile()" class="button">Sauvegarder les modifications</button>
+                        <button onclick="updateprofiles()" class="button">Sauvegarder les modifications</button>
                     </div>
                     
                     <!-- 2. NIVEAU DE SURF -->
@@ -743,7 +743,7 @@
                         <h3>Choisir son niveau</h3>
                         <div class="form-group">
                             <label>Niveau de surf</label>
-                            <select id="profile-surf-level" style="font-size: 1.1rem; padding: 15px;">
+                            <select id="profiles-surf-level" style="font-size: 1.1rem; padding: 15px;">
                                 <option value="beginner">Débutant - J'apprends les bases</option>
                                 <option value="intermediate" selected>Intermédiaire - Je surfe en autonomie</option>
                                 <option value="advanced">Avancé - Je maîtrise les manœuvres</option>
@@ -759,12 +759,12 @@
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                             <div class="form-group">
                                 <label>Taille minimum (mètres)</label>
-                                <input type="number" id="profile-wave-min" step="0.1" min="0.3" max="5" placeholder="0.7" value="0.7">
+                                <input type="number" id="profiles-wave-min" step="0.1" min="0.3" max="5" placeholder="0.7" value="0.7">
                                 <small style="color: #666;">Plus petite vague que vous surfez</small>
                             </div>
                             <div class="form-group">
                                 <label>Taille maximum (mètres)</label>
-                                <input type="number" id="profile-wave-max" step="0.1" min="0.5" max="8" placeholder="1.8" value="1.8">
+                                <input type="number" id="profiles-wave-max" step="0.1" min="0.5" max="8" placeholder="1.8" value="1.8">
                                 <small style="color: #666;">Plus grosse vague que vous osez prendre</small>
                             </div>
                         </div>
@@ -778,7 +778,7 @@
                             Pour ajouter des spots favoris, rendez-vous dans l'onglet 
                             <button onclick="showTab('spots')" class="button secondary" style="display: inline; padding: 4px 8px; font-size: 0.9rem;">Spots</button>
                         </p>
-                        <div id="profile-favorite-spots">
+                        <div id="profiles-favorite-spots">
                             <div class="loading">Chargement de vos spots favoris...</div>
                         </div>
                     </div>
@@ -826,7 +826,7 @@
                         </div>
                     </div>
                     
-                    <div id="profile-messages"></div>
+                    <div id="profiles-messages"></div>
                 </div>
             </div>
             
@@ -872,7 +872,7 @@
                     display: block;
                 }
                 
-                .profile-container {
+                .profiles-container {
                     background: white;
                     border-radius: 12px;
                     padding: 30px;
@@ -971,8 +971,8 @@
                         const { data: { user } } = await supabaseAuth.auth.getUser();
                         if (user) {
                             currentUser = user;
-                            showProfileSection();
-                            await loadUserProfile();
+                            showprofilesSection();
+                            await loadUserprofiles();
                         } else {
                             showAuthSection();
                         }
@@ -1024,8 +1024,8 @@
                         showMessage('auth', 'success', 'Connexion réussie !');
                         
                         setTimeout(() => {
-                            showProfileSection();
-                            loadUserProfile();
+                            showprofilesSection();
+                            loadUserprofiles();
                         }, 1000);
                         
                     } catch (error) {
@@ -1081,7 +1081,7 @@
                         showMessage('auth', 'success', 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte.');
                         
                         if (data.user) {
-                            await createUserProfile(data.user, { firstname, lastname, level });
+                            await createUserprofiles(data.user, { firstname, lastname, level });
                         }
                         
                     } catch (error) {
@@ -1107,7 +1107,7 @@
                 
                 // ===== GESTION PROFIL =====
                 
-                async function createUserProfile(user, additionalData) {
+                async function createUserprofiles(user, additionalData) {
                 console.log('Création profil pour:', user.id, additionalData);
                 
                 if (!window.supabaseAuth) {
@@ -1117,7 +1117,7 @@
                 
                 try {
                     const { error } = await window.supabaseAuth
-                        .from('profile')
+                        .from('profiles')
                         .upsert([{
                             uuid: user.id,
                             email: user.email,
@@ -1141,19 +1141,19 @@
                 }
             }
                 
-                async function loadUserProfile() {
+                async function loadUserprofiles() {
                     if (!currentUser || !window.dataManager) return;
                     
                     try {
-                        const profile = await dataManager.getUserProfile(currentUser.id);
+                        const profiles = await dataManager.getUserprofiles(currentUser.id);
                         
-                        if (profile) {
-                            document.getElementById('profile-display-name').textContent = 
-                                currentUser.user_metadata?.full_name || profile.personal?.name || 'Utilisateur SurfAI';
-                            document.getElementById('profile-display-email').textContent = currentUser.email;
+                        if (profiles) {
+                            document.getElementById('profiles-display-name').textContent = 
+                                currentUser.user_metadata?.full_name || profiles.personal?.name || 'Utilisateur SurfAI';
+                            document.getElementById('profiles-display-email').textContent = currentUser.email;
                             
                             // Statut email
-                            const verificationElement = document.getElementById('profile-verification-status');
+                            const verificationElement = document.getElementById('profiles-verification-status');
                             if (currentUser.email_confirmed_at) {
                                 verificationElement.textContent = 'Email vérifié';
                                 verificationElement.style.background = '#c6f6d5';
@@ -1165,26 +1165,26 @@
                             }
                             
                             // Remplir les champs
-                            if (profile.personal) {
-                                document.getElementById('profile-email').value = currentUser.email;
-                                document.getElementById('profile-nickname').value = profile.personal.name || '';
+                            if (profiles.personal) {
+                                document.getElementById('profiles-email').value = currentUser.email;
+                                document.getElementById('profiles-nickname').value = profiles.personal.name || '';
                             }
                             
-                            if (profile.surfLevel) {
-                                document.getElementById('profile-surf-level').value = 
-                                    typeof profile.surfLevel.overall === 'number' 
-                                        ? convertNumericToLevel(profile.surfLevel.overall) 
-                                        : profile.surfLevel.overall || 'intermediate';
+                            if (profiles.surfLevel) {
+                                document.getElementById('profiles-surf-level').value = 
+                                    typeof profiles.surfLevel.overall === 'number' 
+                                        ? convertNumericToLevel(profiles.surfLevel.overall) 
+                                        : profiles.surfLevel.overall || 'intermediate';
                             }
                             
-                            if (profile.preferences?.waveSize) {
-                                document.getElementById('profile-wave-min').value = profile.preferences.waveSize.min || 0.7;
-                                document.getElementById('profile-wave-max').value = profile.preferences.waveSize.max || 1.8;
+                            if (profiles.preferences?.waveSize) {
+                                document.getElementById('profiles-wave-min').value = profiles.preferences.waveSize.min || 0.7;
+                                document.getElementById('profiles-wave-max').value = profiles.preferences.waveSize.max || 1.8;
                             }
                         }
                         
                         // Charger spots favoris et boards
-                        await loadProfileFavoriteSpots();
+                        await loadprofilesFavoriteSpots();
                         await loadUserBoards();
                         
                         updateAvatarDisplay();
@@ -1196,16 +1196,16 @@
                 
                 // ===== FONCTIONS SPÉCIFIQUES =====
                 
-                async function updateProfile() {
-                    const email = document.getElementById('profile-email').value;
-                    const nickname = document.getElementById('profile-nickname').value;
-                    const newPassword = document.getElementById('profile-new-password').value;
-                    const confirmPassword = document.getElementById('profile-new-password-confirm').value;
+                async function updateprofiles() {
+                    const email = document.getElementById('profiles-email').value;
+                    const nickname = document.getElementById('profiles-nickname').value;
+                    const newPassword = document.getElementById('profiles-new-password').value;
+                    const confirmPassword = document.getElementById('profiles-new-password-confirm').value;
                     
                     try {
                         // Mettre à jour le profil
                         if (nickname) {
-                            await dataManager.updateUserProfile(currentUser.id, {
+                            await dataManager.updateUserprofiles(currentUser.id, {
                                 personal: { name: nickname, email: email }
                             });
                         }
@@ -1213,12 +1213,12 @@
                         // Mettre à jour le mot de passe si fourni
                         if (newPassword) {
                             if (newPassword !== confirmPassword) {
-                                showMessage('profile', 'error', 'Les mots de passe ne correspondent pas');
+                                showMessage('profiles', 'error', 'Les mots de passe ne correspondent pas');
                                 return;
                             }
                             
                             if (newPassword.length < 6) {
-                                showMessage('profile', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
+                                showMessage('profiles', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
                                 return;
                             }
                             
@@ -1228,46 +1228,46 @@
                             
                             if (error) throw error;
                             
-                            document.getElementById('profile-new-password').value = '';
-                            document.getElementById('profile-new-password-confirm').value = '';
+                            document.getElementById('profiles-new-password').value = '';
+                            document.getElementById('profiles-new-password-confirm').value = '';
                         }
                         
-                        showMessage('profile', 'success', 'Profil mis à jour avec succès !');
-                        await loadUserProfile();
+                        showMessage('profiles', 'success', 'Profil mis à jour avec succès !');
+                        await loadUserprofiles();
                         
                     } catch (error) {
                         console.error('Erreur mise à jour profil:', error);
-                        showMessage('profile', 'error', `Erreur: ${error.message}`);
+                        showMessage('profiles', 'error', `Erreur: ${error.message}`);
                     }
                 }
                 
                 async function updateSurfLevel() {
-                    const level = document.getElementById('profile-surf-level').value;
+                    const level = document.getElementById('profiles-surf-level').value;
                     
                     try {
-                        await dataManager.updateUserProfile(currentUser.id, {
+                        await dataManager.updateUserprofiles(currentUser.id, {
                             surfLevel: { overall: level }
                         });
                         
-                        showMessage('profile', 'success', 'Niveau de surf mis à jour !');
+                        showMessage('profiles', 'success', 'Niveau de surf mis à jour !');
                         
                     } catch (error) {
                         console.error('Erreur mise à jour niveau:', error);
-                        showMessage('profile', 'error', `Erreur: ${error.message}`);
+                        showMessage('profiles', 'error', `Erreur: ${error.message}`);
                     }
                 }
                 
                 async function updateWavePreferences() {
-                    const waveMin = parseFloat(document.getElementById('profile-wave-min').value);
-                    const waveMax = parseFloat(document.getElementById('profile-wave-max').value);
+                    const waveMin = parseFloat(document.getElementById('profiles-wave-min').value);
+                    const waveMax = parseFloat(document.getElementById('profiles-wave-max').value);
                     
                     if (waveMin >= waveMax) {
-                        showMessage('profile', 'error', 'La taille minimum doit être inférieure à la taille maximum');
+                        showMessage('profiles', 'error', 'La taille minimum doit être inférieure à la taille maximum');
                         return;
                     }
                     
                     try {
-                        await dataManager.updateUserProfile(currentUser.id, {
+                        await dataManager.updateUserprofiles(currentUser.id, {
                             preferences: {
                                 waveSize: {
                                     min: waveMin,
@@ -1277,17 +1277,17 @@
                             }
                         });
                         
-                        showMessage('profile', 'success', 'Préférences de vagues mises à jour !');
+                        showMessage('profiles', 'success', 'Préférences de vagues mises à jour !');
                         
                     } catch (error) {
                         console.error('Erreur mise à jour vagues:', error);
-                        showMessage('profile', 'error', `Erreur: ${error.message}`);
+                        showMessage('profiles', 'error', `Erreur: ${error.message}`);
                     }
                 }
                 
-                async function loadProfileFavoriteSpots() {
+                async function loadprofilesFavoriteSpots() {
                     if (!window.dataManager?.supabase) {
-                        document.getElementById('profile-favorite-spots').innerHTML = `
+                        document.getElementById('profiles-favorite-spots').innerHTML = `
                             <div class="spot-favorite-card">
                                 <p>Configuration Supabase requise pour afficher les favoris.</p>
                             </div>
@@ -1308,11 +1308,11 @@
                         
                         if (error) throw error;
                         
-                        displayProfileFavoriteSpots(favorites || []);
+                        displayprofilesFavoriteSpots(favorites || []);
                         
                     } catch (error) {
                         console.error('Erreur chargement favoris:', error);
-                        document.getElementById('profile-favorite-spots').innerHTML = `
+                        document.getElementById('profiles-favorite-spots').innerHTML = `
                             <div class="spot-favorite-card">
                                 <p>Erreur chargement favoris: ${error.message}</p>
                             </div>
@@ -1320,8 +1320,8 @@
                     }
                 }
                 
-                function displayProfileFavoriteSpots(favorites) {
-                    const container = document.getElementById('profile-favorite-spots');
+                function displayprofilesFavoriteSpots(favorites) {
+                    const container = document.getElementById('profiles-favorite-spots');
                     
                     if (favorites.length === 0) {
                         container.innerHTML = `
@@ -1345,7 +1345,7 @@
                                         <button onclick="showSpotInfo('${spot.id}')" class="button secondary" style="padding: 6px 12px; font-size: 0.9rem; margin-right: 10px;">
                                             Plus d'info
                                         </button>
-                                        <button onclick="removeFavoriteFromProfile('${spot.id}')" class="button danger" style="padding: 6px 12px; font-size: 0.9rem;">
+                                        <button onclick="removeFavoriteFromprofiles('${spot.id}')" class="button danger" style="padding: 6px 12px; font-size: 0.9rem;">
                                             Supprimer
                                         </button>
                                     </div>
@@ -1364,7 +1364,7 @@
                     const shaper = document.getElementById('board-shaper').value;
                     
                     if (!name || !size || !type || !shaper) {
-                        showMessage('profile', 'error', 'Veuillez remplir tous les champs');
+                        showMessage('profiles', 'error', 'Veuillez remplir tous les champs');
                         return;
                     }
                     
@@ -1378,12 +1378,12 @@
                         document.getElementById('board-type').value = '';
                         document.getElementById('board-shaper').value = '';
                         
-                        showMessage('profile', 'success', 'Board ajoutée avec succès !');
+                        showMessage('profiles', 'success', 'Board ajoutée avec succès !');
                         await loadUserBoards();
                         
                     } catch (error) {
                         console.error('Erreur ajout board:', error);
-                        showMessage('profile', 'error', `Erreur: ${error.message}`);
+                        showMessage('profiles', 'error', `Erreur: ${error.message}`);
                     }
                 }
                 
@@ -1441,12 +1441,12 @@
                 
                 function showAuthSection() {
                     document.getElementById('auth-section').classList.remove('hidden');
-                    document.getElementById('profile-section').classList.add('hidden');
+                    document.getElementById('profiles-section').classList.add('hidden');
                 }
                 
-                function showProfileSection() {
+                function showprofilesSection() {
                     document.getElementById('auth-section').classList.add('hidden');
-                    document.getElementById('profile-section').classList.remove('hidden');
+                    document.getElementById('profiles-section').classList.remove('hidden');
                 }
                 
                 function showMessage(section, type, message) {
@@ -1480,28 +1480,28 @@
                 
                 // Fonctions callbacks pour les actions
                 function showSpotInfo(spotId) {
-                    showMessage('profile', 'info', 'Redirection vers fiche spot (à implémenter)');
+                    showMessage('profiles', 'info', 'Redirection vers fiche spot (à implémenter)');
                 }
                 
-                function removeFavoriteFromProfile(spotId) {
+                function removeFavoriteFromprofiles(spotId) {
                     if (window.toggleFavorite) {
                         toggleFavorite(spotId).then(() => {
-                            loadProfileFavoriteSpots();
+                            loadprofilesFavoriteSpots();
                         });
                     }
                 }
                 
                 function showShaperInfo(shaperName) {
-                    showMessage('profile', 'info', `Fiche shaper ${shaperName} (fonctionnalité future)`);
+                    showMessage('profiles', 'info', `Fiche shaper ${shaperName} (fonctionnalité future)`);
                 }
                 
                 function editBoard(boardId) {
-                    showMessage('profile', 'info', 'Édition board (à implémenter)');
+                    showMessage('profiles', 'info', 'Édition board (à implémenter)');
                 }
                 
                 function deleteBoard(boardId) {
                     if (confirm('Supprimer cette board ?')) {
-                        showMessage('profile', 'success', 'Board supprimée');
+                        showMessage('profiles', 'success', 'Board supprimée');
                         loadUserBoards();
                     }
                 }
@@ -1511,7 +1511,7 @@
                 }
                 
                 function handlePhotoUpload(event) {
-                    showMessage('profile', 'info', 'Upload photo (à implémenter avec Storage)');
+                    showMessage('profiles', 'info', 'Upload photo (à implémenter avec Storage)');
                 }
                 
                 function showForgotPassword() {
@@ -1524,7 +1524,7 @@
                 }
                 
                 // Modifier la fonction showTab existante pour gérer l'auth
-                function showAuthOrProfile() {
+                function showAuthOrprofiles() {
                     checkAuthState();
                 }
                 
@@ -1552,7 +1552,7 @@
                 }
                 
                 // Vérifier l'état d'authentification au chargement
-                if (document.getElementById('profile') && window.supabaseAuth) {
+                if (document.getElementById('profiles') && window.supabaseAuth) {
                     checkAuthState();
                 }
             });
@@ -1677,7 +1677,7 @@
                 this.cache = {
                     weatherData: new Map(),
                     aiPreferences: null,
-                    userProfile: null,
+                    userprofiles: null,
                     spots: null,
                     boards: null,
                     lastUpdate: new Map()
@@ -1825,29 +1825,29 @@
             }
 
             // GESTION PROFIL & BOARDS
-            async getUserProfile(userId) {
-                if (this.cache.userProfile && this.isCacheValid('profile', this.staticCacheTimeout)) {
-                    return this.cache.userProfile;
+            async getUserprofiles(userId) {
+                if (this.cache.userprofiles && this.isCacheValid('profiles', this.staticCacheTimeout)) {
+                    return this.cache.userprofiles;
                 }
 
                 if (this.supabase) {
                     try {
-                        const { data: profile, error } = await this.supabase
-                            .from('user_profiles')
+                        const { data: profiles, error } = await this.supabase
+                            .from('user_profiless')
                             .select('*')
                             .eq('user_id', userId)
                             .single();
 
                         if (error && error.code !== 'PGRST116') throw error;
-                        this.cache.userProfile = profile || this.getDefaultProfile();
-                        this.cache.lastUpdate.set('profile', Date.now());
-                        return this.cache.userProfile;
+                        this.cache.userprofiles = profiles || this.getDefaultprofiles();
+                        this.cache.lastUpdate.set('profiles', Date.now());
+                        return this.cache.userprofiles;
                     } catch (error) {
                         console.warn('Erreur profil Supabase:', error);
                     }
                 }
 
-                return this.getDefaultProfile();
+                return this.getDefaultprofiles();
             }
 
             async getUserBoards(userId) {
@@ -1912,22 +1912,22 @@
             // PRÉDICTIONS PERSONNALISÉES
             async getPersonalizedPrediction(userId, spotId, boardId = null) {
                 try {
-                    const [weatherData, aiPreferences, profile, boards] = await Promise.all([
+                    const [weatherData, aiPreferences, profiles, boards] = await Promise.all([
                         this.getWeatherData(spotId),
                         this.getAIPreferences(userId),
-                        this.getUserProfile(userId),
+                        this.getUserprofiles(userId),
                         this.getUserBoards(userId)
                     ]);
 
                     const selectedBoard = boardId ? boards.find(b => b.id == boardId) : null;
-                    const score = this.calculatePersonalizedScore(weatherData, aiPreferences, profile, selectedBoard);
+                    const score = this.calculatePersonalizedScore(weatherData, aiPreferences, profiles, selectedBoard);
 
                     return {
                         spotId,
                         boardId,
                         weather: weatherData,
                         score: score,
-                        recommendation: this.generateRecommendation(score, weatherData, profile),
+                        recommendation: this.generateRecommendation(score, weatherData, profiles),
                         timestamp: new Date().toISOString()
                     };
                 } catch (error) {
@@ -1936,7 +1936,7 @@
                 }
             }
 
-            calculatePersonalizedScore(weather, aiPrefs, profile, board) {
+            calculatePersonalizedScore(weather, aiPrefs, profiles, board) {
                 let score = 5.0;
                 
                 // Facteur conditions météo (40%)
@@ -1953,12 +1953,12 @@
                 }
 
                 // Facteur niveau utilisateur (30%)
-                const levelFactor = this.getLevelFactor(profile.level, weather);
+                const levelFactor = this.getLevelFactor(profiles.level, weather);
                 score *= levelFactor;
 
                 // Facteur board adaptée (20%)
                 if (board) {
-                    const boardFactor = this.getBoardFactor(board, weather, profile);
+                    const boardFactor = this.getBoardFactor(board, weather, profiles);
                     score *= boardFactor;
                 }
 
@@ -1968,7 +1968,7 @@
                 return Math.max(1, Math.min(10, score));
             }
 
-            getBoardFactor(board, weather, profile) {
+            getBoardFactor(board, weather, profiles) {
                 let factor = 1.0;
                 
                 const boardAdaptation = {
@@ -1984,11 +1984,11 @@
                         factor += 0.1;
                     }
                     
-                    if (adaptation.skillBonus && profile.level === 'beginner') {
+                    if (adaptation.skillBonus && profiles.level === 'beginner') {
                         factor += adaptation.skillBonus;
                     }
                     
-                    if (adaptation.skillPenalty && profile.level === 'beginner') {
+                    if (adaptation.skillPenalty && profiles.level === 'beginner') {
                         factor -= adaptation.skillPenalty;
                     }
                 }
@@ -2077,7 +2077,7 @@
                 };
             }
 
-            getDefaultProfile() {
+            getDefaultprofiles() {
                 return {
                     level: 'intermediate',
                     preferences: { waveMin: 0.8, waveMax: 2.5 }
@@ -2094,7 +2094,7 @@
                 return factors[level] || 1.0;
             }
 
-            generateRecommendation(score, weather, profile) {
+            generateRecommendation(score, weather, profiles) {
                 if (score >= 8) return "Session PARFAITE pour vous ! Conditions idéales selon votre profil.";
                 if (score >= 7) return "Excellente session en perspective ! Très proche de vos préférences.";
                 if (score >= 6) return "Bonne session possible. Conditions favorables.";
@@ -2115,7 +2115,7 @@
             spots: [],
             favoriteSpots: [],
             predictions: [],
-            profile: {},
+            profiles: {},
             boards: []
         };
 
@@ -2175,7 +2175,7 @@
                 await loadUserBoards();
                 
                 // Charger profil
-                await loadProfile();
+                await loadprofiles();
 
                 // Charger aussi les favoris
                 await loadFavoriteSpots();
@@ -2888,7 +2888,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                 
                 // Recharger boards dans tous les sélecteurs
                 await loadUserBoards();
-                await loadProfile();
+                await loadprofiles();
                 
             } catch (error) {
                 showMessage('error', `Erreur: ${error.message}`);
@@ -3189,18 +3189,18 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
             
             if (tabName === 'sessions') loadSessions();
             if (tabName === 'spots') loadSpots();
-            if (tabName === 'profile') {
-            // L'authentification sera gérée par showAuthOrProfile()
+            if (tabName === 'profiles') {
+            // L'authentification sera gérée par showAuthOrprofiles()
             if (supabaseAuth) {
                 checkAuthState();
             }
         }
             if (tabName === 'predictions') generateIntelligentPredictions();
         }
-        // Nouvelle fonction pour gérer l'onglet Profile avec authentification
-        async function showAuthOrProfile() {
+        // Nouvelle fonction pour gérer l'onglet profiles avec authentification
+        async function showAuthOrprofiles() {
             // Montrer l'onglet
-            showTab('profile');
+            showTab('profiles');
             
             // Vérifier si connecté
             if (supabaseAuth) {
@@ -3211,8 +3211,8 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                         if (window.dataManager) {
                             window.dataManager.currentUserId = user.id;
                         }
-                        showProfileSection();
-                        await loadUserProfile();
+                        showprofilesSection();
+                        await loadUserprofiles();
                     } else {
                         showAuthSection();
                     }
@@ -3239,7 +3239,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
     loadFavoriteSpots();
 }
 
-        function loadProfile() {
+        function loadprofiles() {
             const boardsList = document.getElementById('user-boards-list');
             
             if (userData.boards && userData.boards.length > 0) {
@@ -3262,13 +3262,13 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
             }
         }
 
-        function saveProfile() {
-            const nickname = document.getElementById('profile-nickname').value;
-            const level = document.getElementById('profile-level').value;
-            const waveMin = document.getElementById('profile-wave-min').value;
-            const waveMax = document.getElementById('profile-wave-max').value;
+        function saveprofiles() {
+            const nickname = document.getElementById('profiles-nickname').value;
+            const level = document.getElementById('profiles-level').value;
+            const waveMin = document.getElementById('profiles-wave-min').value;
+            const waveMax = document.getElementById('profiles-wave-max').value;
             
-            userData.profile = {
+            userData.profiles = {
                 nickname,
                 level,
                 wavePreferences: {
@@ -3277,7 +3277,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                 }
             };
             
-            localStorage.setItem('surfai_profile', JSON.stringify(userData.profile));
+            localStorage.setItem('surfai_profiles', JSON.stringify(userData.profiles));
             showMessage('success', 'Profil sauvegardé !');
         }
 
@@ -3340,8 +3340,8 @@ async function checkAuthState() {
         const { data: { user } } = await supabaseAuth.auth.getUser();
         if (user) {
             currentUser = user;
-            showProfileSection();
-            await loadUserProfile();
+            showprofilesSection();
+            await loadUserprofiles();
         } else {
             showAuthSection();
         }
