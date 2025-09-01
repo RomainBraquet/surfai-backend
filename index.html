@@ -1805,7 +1805,7 @@
                         const { data: profiles, error } = await this.supabase
                             .from('profiles')
                             .select('*')
-                            .eq('user_id', userId)
+                            .eq('id', userId)
                             .single();
 
                         if (error && error.code !== 'PGRST116') throw error;
@@ -1830,7 +1830,7 @@
                         const { data: boards, error } = await this.supabase
                             .from('boards')
                             .select('*')
-                            .eq('user_id', userId)
+                            .eq('id', userId)
                             .order('created_at', { ascending: false });
 
                         if (error) throw error;
@@ -2628,7 +2628,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
             const { data: favorites, error } = await dataManager.supabase
                 .from('favorite_spots')
                 .select('spot_id')
-                .eq('user_id', userId);
+                .eq('id', userId)
             
             if (error) throw error;
             
