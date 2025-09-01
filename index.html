@@ -2114,15 +2114,23 @@
             if (savedSupabaseUrl) document.getElementById('supabase-url').value = savedSupabaseUrl;
             if (savedSupabaseKey) document.getElementById('supabase-key').value = savedSupabaseKey;
 
-            // Initialiser gestionnaire centralisé
-            dataManager = new SurfAIDataManager(backendUrl, supabaseClient);
-            console.log('Gestionnaire centralisé initialisé');
+            // Initialiser gestionnaire centralisé SANS Supabase d'abord
+            dataManager = new SurfAIDataManager(backendUrl, null);
             
-            // Auto-connexion Supabase si config existe
+            // Connecter Supabase et réinitialiser dataManager
             if (savedSupabaseUrl && savedSupabaseKey) {
                 console.log('Auto-connexion Supabase...');
                 await testSupabaseConnection();
+            } else {
+                // Utiliser la connexion Supabase de l'authentification
+                if (supabaseAuth) {
+                    dataManager.supabase = supabaseAuth;
+                    dataManager.currentUserId = '3ba8ad73-e2c6-4971-8b32-5a123456789a';
+                    console.log('DataManager connecté avec supabaseAuth');
+                }
             }
+            
+            console.log('Gestionnaire centralisé initialisé');
             
             // Test auto du backend
             await checkBackendConnection();
