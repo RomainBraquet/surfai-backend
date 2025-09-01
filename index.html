@@ -735,7 +735,7 @@
                             </div>
                         </div>
                         
-                        <button onclick="updateProfile()" class="button">Sauvegarder les modifications</button>
+                        <button onclick="updateprofiles()" class="button">Sauvegarder les modifications</button>
                     </div>
                     
                     <!-- 2. NIVEAU DE SURF -->
@@ -1215,218 +1215,105 @@ currentUser = data.user;
                 // ===== FONCTIONS SPÉCIFIQUES =====
                 
                 async function updateProfile() {
-                console.log('updateProfile appelée');
+                if (!currentUser || !supabaseAuth) return;
                 
-                if (!currentUser || !supabaseAuth) {
-                    console.error('currentUser ou supabaseAuth manquant');
-                    showMessage('profiles', 'error', 'Erreur: utilisateur non connecté');
-                    return;
-                }
-                
-                const email = document.getElementById('profiles-email').value;
-                const nickname = document.getElementById('profiles-nickname').value;
-                const newPassword = document.getElementById('profiles-new-password').value;
-                const confirmPassword = document.getElementById('profiles-new-password-confirm').value;
-                
-                console.log('Données à sauvegarder:', { email, nickname, newPassword: !!newPassword });
+                const email = document.getElementById('profile-email').value;
+                const nickname = document.getElementById('profile-nickname').value;
+                const newPassword = document.getElementById('profile-new-password').value;
+                const confirmPassword = document.getElementById('profile-new-password-confirm').value;
                 
                 try {
-                    // Mettre à jour le profil dans la table profiles
+                    // Mettre à jour le profil
                     if (nickname) {
-                        console.log('Mise à jour nickname pour utilisateur:', currentUser.id);
-                        const { error } = await supabaseAuth
-                            .from('profiles')
+                        const { error } = await supabaseAuth.from('profiles')
                             .update({ 
                                 nickname: nickname,
                                 updated_at: new Date().toISOString() 
                             })
-                            .eq('id', currentUser.id);  // ✅ Utilise 'id' pas 'user_id'
+                            .eq('id', currentUser.id);
                         
-                        if (error) {
-                            console.error('Erreur Supabase profiles:', error);
-                            throw error;
-                        }
-                        console.log('Nickname mis à jour avec succès');
+                        if (error) throw error;
                     }
                     
-                    // Mettre à jour le mot de passe si fourni
+                    // Mettre à jour le mot de passe
                     if (newPassword) {
                         if (newPassword !== confirmPassword) {
-                            showMessage('profiles', 'error', 'Les mots de passe ne correspondent pas');
+                            showMessage('profile', 'error', 'Les mots de passe ne correspondent pas');
                             return;
                         }
                         
                         if (newPassword.length < 6) {
-                            showMessage('profiles', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
+                            showMessage('profile', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
                             return;
                         }
                         
-                        console.log('Mise à jour mot de passe');
                         const { error } = await supabaseAuth.auth.updateUser({ password: newPassword });
-                        if (error) {
-                            console.error('Erreur mise à jour mot de passe:', error);
-                            throw error;
-                        }
+                        if (error) throw error;
                         
-                        // Reset des champs mot de passe
-                        document.getElementById('profiles-new-password').value = '';
-                        document.getElementById('profiles-new-password-confirm').value = '';
-                        console.log('Mot de passe mis à jour avec succès');
+                        document.getElementById('profile-new-password').value = '';
+                        document.getElementById('profile-new-password-confirm').value = '';
                     }
                     
-                    showMessage('profiles', 'success', 'Profil mis à jour avec succès !');
+                    showMessage('profile', 'success', 'Profil mis à jour avec succès !');
                     
                 } catch (error) {
                     console.error('Erreur mise à jour profil:', error);
-                    showMessage('profiles', 'error', `Erreur: ${error.message}`);
+                    showMessage('profile', 'error', `Erreur: ${error.message}`);
                 }
             }
-            
-            async function updateSurfLevel() {
-                console.log('updateSurfLevel appelée');
                 
-                if (!currentUser || !supabaseAuth) {
-                    console.error('currentUser ou supabaseAuth manquant');
-                    showMessage('profiles', 'error', 'Erreur: utilisateur non connecté');
-                    return;
-                }
+                async function updateSurfLevel() {
+                if (!currentUser || !supabaseAuth) return;
                 
-                const level = document.getElementById('profiles-surf-level').value;
-                console.log('Nouveau niveau:', level, 'pour utilisateur:', currentUser.id);
+                const level = document.getElementById('profile-surf-level').value;
                 
                 try {
-                    const { error } = await supabaseAuth
-                        .from('profiles')
+                    const { error } = await supabaseAuth.from('profiles')
                         .update({ 
                             surf_level: level,
                             updated_at: new Date().toISOString() 
                         })
-                        .eq('id', currentUser.id);  // ✅ Utilise 'id' pas 'user_id'
+                        .eq('id', currentUser.id);
                     
-                    if (error) {
-                        console.error('Erreur Supabase surf_level:', error);
-                        throw error;
-                    }
+                    if (error) throw error;
                     
-                    console.log('Niveau de surf mis à jour avec succès');
-                    showMessage('profiles', 'success', 'Niveau de surf mis à jour !');
+                    showMessage('profile', 'success', 'Niveau de surf mis à jour !');
                     
                 } catch (error) {
                     console.error('Erreur mise à jour niveau:', error);
-                    showMessage('profiles', 'error', `Erreur: ${error.message}`);
+                    showMessage('profile', 'error', `Erreur: ${error.message}`);
                 }
             }
-            
-            async function updateWavePreferences() {
-                console.log('updateWavePreferences appelée');
                 
-                if (!currentUser || !supabaseAuth) {
-                    console.error('currentUser ou supabaseAuth manquant');
-                    showMessage('profiles', 'error', 'Erreur: utilisateur non connecté');
-                    return;
-                }
+                async function updateWavePreferences() {
+                if (!currentUser || !supabaseAuth) return;
                 
-                const waveMin = parseFloat(document.getElementById('profiles-wave-min').value);
-                const waveMax = parseFloat(document.getElementById('profiles-wave-max').value);
-                
-                console.log('Nouvelles préférences vagues:', { waveMin, waveMax }, 'pour utilisateur:', currentUser.id);
+                const waveMin = parseFloat(document.getElementById('profile-wave-min').value);
+                const waveMax = parseFloat(document.getElementById('profile-wave-max').value);
                 
                 if (waveMin >= waveMax) {
-                    showMessage('profiles', 'error', 'La taille minimum doit être inférieure à la taille maximum');
+                    showMessage('profile', 'error', 'La taille minimum doit être inférieure à la taille maximum');
                     return;
                 }
                 
                 try {
-                    const { error } = await supabaseAuth
-                        .from('profiles')
+                    const { error } = await supabaseAuth.from('profiles')
                         .update({ 
                             min_wave_height: waveMin,
                             max_wave_height: waveMax,
                             updated_at: new Date().toISOString() 
                         })
-                        .eq('id', currentUser.id);  // ✅ Utilise 'id' pas 'user_id'
+                        .eq('id', currentUser.id);
                     
-                    if (error) {
-                        console.error('Erreur Supabase wave preferences:', error);
-                        throw error;
-                    }
+                    if (error) throw error;
                     
-                    console.log('Préférences de vagues mises à jour avec succès');
-                    showMessage('profiles', 'success', 'Préférences de vagues mises à jour !');
+                    showMessage('profile', 'success', 'Préférences de vagues mises à jour !');
                     
                 } catch (error) {
                     console.error('Erreur mise à jour vagues:', error);
-                    showMessage('profiles', 'error', `Erreur: ${error.message}`);
+                    showMessage('profile', 'error', `Erreur: ${error.message}`);
                 }
             }
-            
-            // Fonction pour afficher les messages (si elle n'existe pas)
-            function showMessage(section, type, message) {
-                console.log(`Message ${type}:`, message);
-                
-                const container = document.getElementById(`${section}-messages`);
-                if (container) {
-                    container.innerHTML = `<div class="${type}">${message}</div>`;
-                    setTimeout(() => container.innerHTML = '', 5000);
-                } else {
-                    // Fallback: alert
-                    alert(`${type.toUpperCase()}: ${message}`);
-                }
-            }
-            
-            // Fonction pour vérifier l'état de l'authentification
-            function checkAuthAndVariables() {
-                console.log('=== VÉRIFICATION ÉTAT AUTHENTIFICATION ===');
-                console.log('currentUser:', currentUser);
-                console.log('supabaseAuth:', !!supabaseAuth);
-                console.log('supabaseAuth.auth:', !!supabaseAuth?.auth);
-                
-                if (!currentUser) {
-                    console.error('❌ currentUser est null');
-                    return false;
-                }
-                
-                if (!supabaseAuth) {
-                    console.error('❌ supabaseAuth est null');
-                    return false;
-                }
-                
-                console.log('✅ Variables d\'authentification OK');
-                return true;
-            }
-            
-            // Fonction de test pour vérifier que tout fonctionne
-            async function testProfileFunctions() {
-                console.log('=== TEST FONCTIONS PROFILE ===');
-                
-                if (!checkAuthAndVariables()) {
-                    console.error('Variables d\'authentification non configurées');
-                    return;
-                }
-                
-                // Test de connection à la base
-                try {
-                    const { data, error } = await supabaseAuth
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', currentUser.id)
-                        .single();
-                    
-                    if (error && error.code !== 'PGRST116') {
-                        console.error('Erreur test connection profiles:', error);
-                        return;
-                    }
-                    
-                    console.log('✅ Connection profiles OK');
-                    console.log('Données profil:', data);
-                    
-                } catch (error) {
-                    console.error('❌ Erreur test connection:', error);
-                }
-            }
-            
-            console.log('✅ Fonctions Profile corrigées chargées');
-            console.log('Utilisez testProfileFunctions() pour tester la connection');
                 
                 async function loadprofilesFavoriteSpots() {
                     if (!window.dataManager?.supabase) {
@@ -1447,7 +1334,7 @@ currentUser = data.user;
                                     id, name, city, region, country, bottom_type
                                 )
                             `)
-                            .eq('id', currentUser.id);
+                            .eq('user_id', currentUser.id);
                         
                         if (error) throw error;
                         
@@ -1652,6 +1539,7 @@ currentUser = data.user;
                     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpzc2lxcHhscXNoc21ocHFqemdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTY5MzgsImV4cCI6MjA2MDYzMjkzOH0.H7tpOyc-iFCQLf4eHOMfJ0T09NvpHy_6kw2onaiJJcw';
                     
                     supabaseAuth = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    window.supabaseAuth = supabaseAuth;
                     console.log('Supabase initialisé pour authentification');
 
                     // Créer un dataManager simple pour compatibilité
@@ -2220,8 +2108,6 @@ currentUser = data.user;
         // ========================================
         let backendUrl = 'https://surfai-backend-production.up.railway.app';
         let backendApiKey = null;
-        let supabaseAuth = null;
-        let currentUser = null;
         let supabaseClient = null;
         let dataManager = null;
         let userData = {
