@@ -1024,9 +1024,10 @@
                         showMessage('auth', 'success', 'Connexion réussie !');
                         
                         setTimeout(() => {
-                            showProfileSection();
-                            loadUserData();
+                            showprofilesSection();
+                            loadUserprofiles();
                         }, 1000);
+
                         
                     } catch (error) {
                         console.error('Erreur connexion:', error);
