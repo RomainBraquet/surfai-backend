@@ -961,11 +961,6 @@
                 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpzc2lxcHhscXNoc21ocHFqemdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTY5MzgsImV4cCI6MjA2MDYzMjkzOH0.H7tpOyc-iFCQLf4eHOMfJ0T09NvpHy_6kw2onaiJJcw'; // À remplacer
                 let currentUser = null;
                 let supabaseAuth = null;
-                
-                // Initialiser Supabase si disponible
-                if (typeof window.supabase !== 'undefined') {
-                    supabaseAuth = window.supabase.createClient(supabaseUrl, supabaseKey);
-                }
             
                 // ===== GESTION AUTHENTIFICATION =====
                 
@@ -1543,7 +1538,8 @@
                     const supabaseUrl = 'https://zssiqpxlqshsmhpqjzgb.supabase.co';
                     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpzc2lxcHhscXNoc21ocHFqemdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTY5MzgsImV4cCI6MjA2MDYzMjkzOH0.H7tpOyc-iFCQLf4eHOMfJ0T09NvpHy_6kw2onaiJJcw';
                     
-                    window.supabaseAuth = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    supabaseAuth = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    window.supabaseAuth = supabaseAuth;
                     console.log('Supabase initialisé pour authentification');
                     
                     // Créer un dataManager simple pour compatibilité
