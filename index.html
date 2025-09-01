@@ -1539,37 +1539,42 @@ currentUser = data.user;
                     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpzc2lxcHhscXNoc21ocHFqemdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTY5MzgsImV4cCI6MjA2MDYzMjkzOH0.H7tpOyc-iFCQLf4eHOMfJ0T09NvpHy_6kw2onaiJJcw';
                     
                     let supabaseAuth = null;
-let currentUser = null;
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialiser Supabase avec les bonnes variables
-    if (typeof window.supabase !== 'undefined') {
-        const supabaseUrl = 'https://zssiqpxlqshsmhpqjzgb.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpzc2lxcHhscXNoc21ocHFqemdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTY5MzgsImV4cCI6MjA2MDYzMjkzOH0.H7tpOyc-iFCQLf4eHOMfJ0T09NvpHy_6kw2onaiJJcw';
-        
-        supabaseAuth = window.supabase.createClient(supabaseUrl, supabaseKey);
-        console.log('Supabase initialisé pour authentification');
-        
-        // Synchroniser avec dataManager si il existe
-        if (window.dataManager) {
-            window.dataManager.supabase = supabaseAuth;
-        }
-        
-        // Vérifier si un utilisateur est déjà connecté
-        supabaseAuth.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session?.user) {
-                currentUser = session.user;
-                if (window.dataManager) {
-                    window.dataManager.currentUserId = session.user.id;
-                }
-                showProfileSection();
-            } else if (event === 'SIGNED_OUT') {
-                currentUser = null;
-                showAuthSection();
-            }
-        });
-    }
-});
+                    let currentUser = null;
+                    
+                    // Initialisation Supabase - AU DÉBUT, avant le DOMContentLoaded
+                    if (typeof window.supabase !== 'undefined') {
+                        const supabaseUrl = 'https://zssiqpxlqshsmhpqjzgb.supabase.co';
+                        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpzc2lxcHhscXNoc21ocHFqemdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTY5MzgsImV4cCI6MjA2MDYzMjkzOH0.H7tpOyc-iFCQLf4eHOMfJ0T09NvpHy_6kw2onaiJJcw';
+                        
+                        supabaseAuth = window.supabase.createClient(supabaseUrl, supabaseKey);
+                        console.log('Supabase initialisé pour authentification');
+                    }
+                    
+                    // Ensuite le DOMContentLoaded - SÉPARÉ
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Synchroniser avec dataManager si il existe
+                        if (window.dataManager && supabaseAuth) {
+                            window.dataManager.supabase = supabaseAuth;
+                        }
+                        
+                        // Vérifier état d'authentification
+                        if (supabaseAuth) {
+                            supabaseAuth.auth.onAuthStateChange((event, session) => {
+                                if (event === 'SIGNED_IN' && session?.user) {
+                                    currentUser = session.user;
+                                    if (window.dataManager) {
+                                        window.dataManager.currentUserId = session.user.id;
+                                    }
+                                    showProfileSection();
+                                } else if (event === 'SIGNED_OUT') {
+                                    currentUser = null;
+                                    showAuthSection();
+                                }
+                            });
+                        }
+                        
+                        // Reste de votre code d'initialisation...
+                    });
             </script>
             
             <!-- Meteo Tab -->
