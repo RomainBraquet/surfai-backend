@@ -1356,37 +1356,7 @@
                     
                     container.innerHTML = html;
                 }
-                
-                async function addBoard() {
-                    const name = document.getElementById('board-name').value;
-                    const size = document.getElementById('board-size').value;
-                    const type = document.getElementById('board-type').value;
-                    const shaper = document.getElementById('board-shaper').value;
-                    
-                    if (!name || !size || !type || !shaper) {
-                        showMessage('profiles', 'error', 'Veuillez remplir tous les champs');
-                        return;
-                    }
-                    
-                    try {
-                        const board = { name, size, type, shaper };
-                        await dataManager.saveUserBoard(currentUser.id, board);
-                        
-                        // Reset form
-                        document.getElementById('board-name').value = '';
-                        document.getElementById('board-size').value = '';
-                        document.getElementById('board-type').value = '';
-                        document.getElementById('board-shaper').value = '';
-                        
-                        showMessage('profiles', 'success', 'Board ajoutée avec succès !');
-                        await loadUserBoards();
-                        
-                    } catch (error) {
-                        console.error('Erreur ajout board:', error);
-                        showMessage('profiles', 'error', `Erreur: ${error.message}`);
-                    }
-                }
-                
+                                
                 async function loadUserBoards() {
                     if (!window.dataManager) return;
                     
@@ -2869,13 +2839,13 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
             const type = document.getElementById('board-type').value;
             const shaper = document.getElementById('board-shaper').value;
             
-            if (!name || !size || !type || !shaper) {
-                showMessage('error', 'Veuillez remplir tous les champs');
+            if (!name || !size || !type) {
+                showMessage('profile', 'error', 'Veuillez remplir tous les champs');
                 return;
             }
             
             try {
-                const board = { name, size, type, shaper };
+                const board = { name, size, type };
                 await dataManager.saveUserBoard(dataManager.currentUserId, board);
                 
                 // Reset form
