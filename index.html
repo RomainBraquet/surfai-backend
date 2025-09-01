@@ -1113,29 +1113,38 @@
                 // ===== GESTION PROFIL =====
                 
                 async function createUserProfile(user, additionalData) {
-                    if (!window.dataManager || !dataManager.supabase) return;
-                    
-                    try {
-                        const { error } = await dataManager.supabase
-                            .from('profile')
-                            .upsert([{
-                                uuid: user.id,
-                                email: user.email,
-                                nickname: additionalData.firstname,
-                                surf_level: additionalData.level,
-                                min_wave_height: 0.7,
-                                max_wave_height: 1.8,
-                                created_at: new Date().toISOString(),
-                                updated_at: new Date().toISOString()
-                            }]);
-                        
-                        if (error) throw error;
-                        console.log('Profil créé avec succès');
-                        
-                    } catch (error) {
-                        console.error('Erreur création profil:', error);
-                    }
+                console.log('Création profil pour:', user.id, additionalData);
+                
+                if (!window.supabaseAuth) {
+                    console.error('supabaseAuth non disponible');
+                    return;
                 }
+                
+                try {
+                    const { error } = await window.supabaseAuth
+                        .from('profile')
+                        .upsert([{
+                            uuid: user.id,
+                            email: user.email,
+                            nickname: additionalData.firstname,
+                            surf_level: additionalData.level,
+                            min_wave_height: 0.7,
+                            max_wave_height: 1.8,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        }]);
+                    
+                    if (error) {
+                        console.error('Erreur Supabase:', error);
+                        throw error;
+                    }
+                    
+                    console.log('Profil créé avec succès dans Supabase');
+                    
+                } catch (error) {
+                    console.error('Erreur création profil:', error);
+                }
+            }
                 
                 async function loadUserProfile() {
                     if (!currentUser || !window.dataManager) return;
@@ -1525,11 +1534,32 @@
                 }
                 
                 // Initialisation
-                document.addEventListener('DOMContentLoaded', function() {
-                    if (window.supabase && document.getElementById('profile')) {
-                        checkAuthState();
-                    }
-                });
+                document.addEventListener('DOMContentLoaded', async function() {
+                // Date par défaut
+                document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
+                
+                // Initialiser Supabase directement pour l'authentification
+                if (typeof window.supabase !== 'undefined') {
+                    const supabaseUrl = 'https://zssiqpxlqshsmhpqjzgb.supabase.co';
+                    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpzc2lxcHhscXNoc21ocHFqemdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUwNTY5MzgsImV4cCI6MjA2MDYzMjkzOH0.H7tpOyc-iFCQLf4eHOMfJ0T09NvpHy_6kw2onaiJJcw';
+                    
+                    window.supabaseAuth = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    console.log('Supabase initialisé pour authentification');
+                    
+                    // Créer un dataManager simple pour compatibilité
+                    window.dataManager = {
+                        supabase: window.supabaseAuth,
+                        currentUserId: '3ba8ad73-e2c6-4971-8b32-5a123456789a'
+                    };
+                    
+                    console.log('DataManager simple créé');
+                }
+                
+                // Vérifier l'état d'authentification au chargement
+                if (document.getElementById('profile') && window.supabaseAuth) {
+                    checkAuthState();
+                }
+            });
             </script>
             
             <!-- Meteo Tab -->
