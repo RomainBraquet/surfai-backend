@@ -1145,7 +1145,7 @@
                     if (!currentUser || !window.dataManager) return;
                     
                     try {
-                        const profiles = await dataManager.getUserprofiles(currentUser.id);
+                        const profiles = await dataManager.getUserProfile(currentUser.id);
                         
                         if (profiles) {
                             document.getElementById('profiles-display-name').textContent = 
@@ -1825,7 +1825,7 @@
             }
 
             // GESTION PROFIL & BOARDS
-            async getUserprofiles(userId) {
+            async getUserProfile(userId) {
                 if (this.cache.userprofiles && this.isCacheValid('profiles', this.staticCacheTimeout)) {
                     return this.cache.userprofiles;
                 }
@@ -1833,7 +1833,7 @@
                 if (this.supabase) {
                     try {
                         const { data: profiles, error } = await this.supabase
-                            .from('user_profiles')
+                            .from('profiles')
                             .select('*')
                             .eq('user_id', userId)
                             .single();
@@ -1915,7 +1915,7 @@
                     const [weatherData, aiPreferences, profiles, boards] = await Promise.all([
                         this.getWeatherData(spotId),
                         this.getAIPreferences(userId),
-                        this.getUserprofiles(userId),
+                        this.getUserProfile(userId),
                         this.getUserBoards(userId)
                     ]);
 
