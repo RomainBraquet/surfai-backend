@@ -1300,33 +1300,35 @@ currentUser = data.user;
                 async function updateWavePreferences() {
                 if (!currentUser || !supabaseAuth) return;
                 
-                const waveMin = parseFloat(document.getElementById('profile-wave-min').value);
-                const waveMax = parseFloat(document.getElementById('profile-wave-max').value);
+                const waveMin = parseFloat(document.getElementById('profiles-wave-min').value);
+                const waveMax = parseFloat(document.getElementById('profiles-wave-max').value);
                 
                 if (waveMin >= waveMax) {
-                    showMessage('profile', 'error', 'La taille minimum doit être inférieure à la taille maximum');
+                    showMessage('profiles', 'error', 'La taille minimum doit être inférieure à la taille maximum');
                     return;
                 }
                 
                 try {
-                    const { error } = await supabaseAuth.from('profiles')
+                    const { error, data } = await supabaseAuth.from('profiles')
                         .update({ 
                             min_wave_height: waveMin,
                             max_wave_height: waveMax,
                             updated_at: new Date().toISOString() 
                         })
-                        .eq('id', currentUser.id);
+                        .eq('id', currentUser.id)
                         .select();
                     
                     if (error) throw error;
+                    if (!data || data.length === 0) throw new Error('Profil non trouvé');
                     
-                    showMessage('profile', 'success', 'Préférences de vagues mises à jour !');
+                    showMessage('profiles', 'success', 'Préférences de vagues mises à jour !');
                     
                 } catch (error) {
                     console.error('Erreur mise à jour vagues:', error);
-                    showMessage('profile', 'error', `Erreur: ${error.message}`);
+                    showMessage('profiles', 'error', `Erreur: ${error.message}`);
                 }
             }
+
                 
                 async function loadprofilesFavoriteSpots() {
                     if (!window.dataManager?.supabase) {
