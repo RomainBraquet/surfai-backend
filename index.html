@@ -1218,49 +1218,48 @@ currentUser = data.user;
                 async function updateProfile() {
                 if (!currentUser || !supabaseAuth) return;
                 
-                const email = document.getElementById('profile-email').value;
-                const nickname = document.getElementById('profile-nickname').value;
-                const newPassword = document.getElementById('profile-new-password').value;
-                const confirmPassword = document.getElementById('profile-new-password-confirm').value;
+                const email = document.getElementById('profiles-email').value;
+                const nickname = document.getElementById('profiles-nickname').value;
+                const newPassword = document.getElementById('profiles-new-password').value;
+                const confirmPassword = document.getElementById('profiles-new-password-confirm').value;
                 
                 try {
-                    // Mettre à jour le profil
                     if (nickname) {
-                        const { error } = await supabaseAuth.from('profiles')
+                        const { error, data } = await supabaseAuth.from('profiles')
                             .update({ 
                                 nickname: nickname,
                                 updated_at: new Date().toISOString() 
                             })
-                            .eq('id', currentUser.id);
+                            .eq('id', currentUser.id)
                             .select();
                         
                         if (error) throw error;
+                        if (!data || data.length === 0) throw new Error('Profil non trouvé');
                     }
                     
-                    // Mettre à jour le mot de passe
                     if (newPassword) {
                         if (newPassword !== confirmPassword) {
-                            showMessage('profile', 'error', 'Les mots de passe ne correspondent pas');
+                            showMessage('profiles', 'error', 'Les mots de passe ne correspondent pas');
                             return;
                         }
                         
                         if (newPassword.length < 6) {
-                            showMessage('profile', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
+                            showMessage('profiles', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
                             return;
                         }
                         
                         const { error } = await supabaseAuth.auth.updateUser({ password: newPassword });
                         if (error) throw error;
                         
-                        document.getElementById('profile-new-password').value = '';
-                        document.getElementById('profile-new-password-confirm').value = '';
+                        document.getElementById('profiles-new-password').value = '';
+                        document.getElementById('profiles-new-password-confirm').value = '';
                     }
                     
-                    showMessage('profile', 'success', 'Profil mis à jour avec succès !');
+                    showMessage('profiles', 'success', 'Profil mis à jour avec succès !');
                     
                 } catch (error) {
                     console.error('Erreur mise à jour profil:', error);
-                    showMessage('profile', 'error', `Erreur: ${error.message}`);
+                    showMessage('profiles', 'error', `Erreur: ${error.message}`);
                 }
             }
                 
