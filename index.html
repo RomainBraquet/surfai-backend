@@ -1232,6 +1232,7 @@ currentUser = data.user;
                                 updated_at: new Date().toISOString() 
                             })
                             .eq('id', currentUser.id);
+                            .select();
                         
                         if (error) throw error;
                     }
@@ -1315,6 +1316,7 @@ currentUser = data.user;
                             updated_at: new Date().toISOString() 
                         })
                         .eq('id', currentUser.id);
+                        .select();
                     
                     if (error) throw error;
                     
