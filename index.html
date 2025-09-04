@@ -1141,7 +1141,14 @@
                     showMessage('auth', 'success', `Inscription réussie ! Profil à configurer manuellement. Erreur profil: ${profileError.message}`);
                 } else {
                     console.log('Profil créé avec succès:', profileData);
-                    showMessage('auth', 'success', 'Inscription réussie ! Profil créé avec succès. Vérifiez votre email pour confirmer votre compte.');
+                    showMessage('auth', 'success', 'Inscription réussie ! Profil créé avec succès. Redirection vers votre profil...');
+                    
+                    // Redirection automatique vers la section profil après 2 secondes
+                    setTimeout(() => {
+                        showprofilesSection();
+                        showTab('profiles'); // Activer l'onglet profil
+                        loadUserprofiles(); // Charger les données du profil
+                    }, 2000);
                 }
                 
             } catch (profileException) {
@@ -1156,32 +1163,27 @@
                 window.dataManager.currentUserId = data.user.id;
                 console.log('dataManager.currentUserId mis à jour');
             }
+            
         } else {
-    console.log('Profil créé avec succès:', profileData);
-    showMessage('auth', 'success', 'Inscription réussie ! Profil créé avec succès. Redirection vers votre profil...');
-    
-    // Redirection automatique vers la section profil après 2 secondes
-    setTimeout(() => {
-        showprofilesSection();
-        showTab('profiles'); // Activer l'onglet profil
-        loadUserprofiles(); // Charger les données du profil
-    }, 2000);
-}
+            console.warn('Pas de données utilisateur retournées par signUp');
+            showMessage('auth', 'success', 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte.');
+        }
         
         console.log('handleRegister() terminé avec succès');
         
     } catch (error) {
-    console.error('Erreur globale inscription:', {
-        error,
-        message: error.message,
-        stack: error.stack
-    });
-    
-    // Gestion spécifique pour utilisateur déjà existant
-    if (error.message && error.message.includes('User already registered')) {
-        showMessage('auth', 'error', `Cet email est déjà utilisé. <a href="#" onclick="switchAuthTab('login')" style="color: #667eea; text-decoration: underline;">Se connecter ici</a>`);
-    } else {
-        showMessage('auth', 'error', `Erreur: ${error.message}`);
+        console.error('Erreur globale inscription:', {
+            error,
+            message: error.message,
+            stack: error.stack
+        });
+        
+        // Gestion spécifique pour utilisateur déjà existant
+        if (error.message && error.message.includes('User already registered')) {
+            showMessage('auth', 'error', `Cet email est déjà utilisé. <a href="#" onclick="switchAuthTab('login')" style="color: #667eea; text-decoration: underline;">Se connecter ici</a>`);
+        } else {
+            showMessage('auth', 'error', `Erreur: ${error.message}`);
+        }
     }
 }
             async function handleLogout() {
