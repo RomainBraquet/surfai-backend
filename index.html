@@ -1172,46 +1172,6 @@
         showMessage('auth', 'error', `Erreur: ${error.message}`);
     }
 }
-    .from('profiles')
-    .insert([{
-        id: data.user.id,
-        surf_level: level,
-        nickname: firstname,
-        min_wave_height: 0.7,
-        max_wave_height: 1.8,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-    }]);
-
-if (profileError) {
-    console.error('Erreur création profil:', profileError);
-} else {
-    console.log('Profil créé avec succès');
-}
-
-currentUser = data.user;
-                        }
-                        
-                    } catch (error) {
-                        console.error('Erreur inscription:', error);
-                        showMessage('auth', 'error', `Erreur: ${error.message}`);
-                    }
-                }
-                
-                async function handleLogout() {
-                    if (!supabaseAuth) return;
-                    
-                    try {
-                        const { error } = await supabaseAuth.auth.signOut();
-                        if (error) throw error;
-                        
-                        currentUser = null;
-                        showAuthSection();
-                        
-                    } catch (error) {
-                        console.error('Erreur déconnexion:', error);
-                    }
-                }
                 
                 // ===== GESTION PROFIL =====
                 
