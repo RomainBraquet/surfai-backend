@@ -1064,8 +1064,8 @@
                 }
                 
                 try {
-                    // 1. Créer l'utilisateur d'abord
-                    const { data: authData, error: authError } = await supabaseAuth.auth.signUp({
+                    // INSCRIPTION SIMPLE avec metadata pour le trigger
+                    const { data, error } = await supabaseAuth.auth.signUp({
                         email,
                         password,
                         options: {
@@ -1078,46 +1078,21 @@
                         }
                     });
                     
-                    if (authError) throw authError;
+                    if (error) throw error;
                     
-                    // 2. Créer le profil IMMÉDIATEMENT après la création de l'utilisateur
-                    if (authData.user) {
-                        console.log('Création profil pour user ID:', authData.user.id);
-                        
-                        const { data: profileData, error: profileError } = await supabaseAuth
-                            .from('profiles')
-                            .insert([{
-                                id: authData.user.id, // UUID généré par Supabase Auth
-                                surf_level: level,
-                                nickname: firstname,
-                                min_wave_height: 0.7,
-                                max_wave_height: 1.8,
-                                created_at: new Date().toISOString(),
-                                updated_at: new Date().toISOString()
-                            }])
-                            .select();
-            
-                        if (profileError) {
-                            console.error('Erreur création profil:', profileError);
-                            // Ne pas échouer silencieusement
-                            showMessage('auth', 'error', `Erreur création profil: ${profileError.message}`);
-                            return;
-                        }
-            
-                        console.log('Profil créé avec succès:', profileData);
-                        
-                        // 3. Confirmer le succès total
-                        showMessage('auth', 'success', 'Inscription réussie ! Profil créé. Vérifiez votre email pour confirmer votre compte.');
-                        
-                        // 4. Mettre à jour les variables globales
-                        currentUser = authData.user;
+                    // Succès - Le profil sera créé automatiquement par le trigger
+                    showMessage('auth', 'success', 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte. Votre profil a été créé automatiquement.');
+                    
+                    // Mettre à jour les variables globales si l'utilisateur est créé
+                    if (data.user) {
+                        currentUser = data.user;
                         if (window.dataManager) {
-                            window.dataManager.currentUserId = authData.user.id;
+                            window.dataManager.currentUserId = data.user.id;
                         }
                     }
                     
                 } catch (error) {
-                    console.error('Erreur inscription complète:', error);
+                    console.error('Erreur inscription:', error);
                     showMessage('auth', 'error', `Erreur: ${error.message}`);
                 }
             }
