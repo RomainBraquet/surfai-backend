@@ -1172,6 +1172,20 @@
         showMessage('auth', 'error', `Erreur: ${error.message}`);
     }
 }
+            async function handleLogout() {
+                if (!supabaseAuth) return;
+                
+                try {
+                    const { error } = await supabaseAuth.auth.signOut();
+                    if (error) throw error;
+                    
+                    currentUser = null;
+                    showAuthSection();
+                    
+                } catch (error) {
+                    console.error('Erreur déconnexion:', error);
+                }
+            }
                 
                 // ===== GESTION PROFIL =====
                 
