@@ -1036,53 +1036,142 @@
                 }
                 
                 async function handleRegister() {
-                    if (!supabaseAuth) {
-                        showMessage('auth', 'error', 'Supabase non configuré');
-                        return;
-                    }
+    console.log('Début handleRegister()');
+    
+    if (!supabaseAuth) {
+        console.error('supabaseAuth non configuré');
+        showMessage('auth', 'error', 'Supabase non configuré');
+        return;
+    }
+    
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    const passwordConfirm = document.getElementById('register-password-confirm').value;
+    const firstname = document.getElementById('register-firstname').value;
+    const lastname = document.getElementById('register-lastname').value;
+    const level = document.getElementById('register-level').value;
+    
+    console.log('Données formulaire récupérées:', {
+        email,
+        firstname,
+        lastname,
+        level,
+        passwordLength: password.length
+    });
+    
+    if (!email || !password || !firstname || !lastname || !level) {
+        console.warn('Champs manquants');
+        showMessage('auth', 'error', 'Veuillez remplir tous les champs');
+        return;
+    }
+    
+    if (password !== passwordConfirm) {
+        console.warn('Mots de passe différents');
+        showMessage('auth', 'error', 'Les mots de passe ne correspondent pas');
+        return;
+    }
+    
+    if (password.length < 6) {
+        console.warn('Mot de passe trop court');
+        showMessage('auth', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
+        return;
+    }
+    
+    try {
+        console.log('Tentative inscription Supabase Auth...');
+        
+        const { data, error } = await supabaseAuth.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    first_name: firstname,
+                    last_name: lastname,
+                    surf_level: level,
+                    full_name: `${firstname} ${lastname}`
+                }
+            }
+        });
+        
+        if (error) {
+            console.error('Erreur inscription auth:', error);
+            throw error;
+        }
+        
+        console.log('Inscription auth réussie:', {
+            userId: data.user?.id,
+            email: data.user?.email,
+            needsConfirmation: !data.user?.email_confirmed_at
+        });
+        
+        if (data.user) {
+            console.log('Création profil pour utilisateur:', data.user.id);
+            
+            try {
+                console.log('Données profil à insérer:', {
+                    id: data.user.id,
+                    surf_level: level,
+                    nickname: firstname,
+                    min_wave_height: 0.7,
+                    max_wave_height: 1.8
+                });
+                
+                const { data: profileData, error: profileError } = await supabaseAuth
+                    .from('profiles')
+                    .insert([{
+                        id: data.user.id,
+                        surf_level: level,
+                        min_wave_height: 0.7,
+                        max_wave_height: 1.8,
+                        nickname: firstname,
+                        board_types: [],
+                        selected_board_ids: []
+                    }])
+                    .select();
+                
+                if (profileError) {
+                    console.error('Erreur insertion profil:', {
+                        error: profileError,
+                        code: profileError.code,
+                        message: profileError.message,
+                        details: profileError.details,
+                        hint: profileError.hint
+                    });
                     
-                    const email = document.getElementById('register-email').value;
-                    const password = document.getElementById('register-password').value;
-                    const passwordConfirm = document.getElementById('register-password-confirm').value;
-                    const firstname = document.getElementById('register-firstname').value;
-                    const lastname = document.getElementById('register-lastname').value;
-                    const level = document.getElementById('register-level').value;
-                    
-                    if (!email || !password || !firstname || !lastname || !level) {
-                        showMessage('auth', 'error', 'Veuillez remplir tous les champs');
-                        return;
-                    }
-                    
-                    if (password !== passwordConfirm) {
-                        showMessage('auth', 'error', 'Les mots de passe ne correspondent pas');
-                        return;
-                    }
-                    
-                    if (password.length < 6) {
-                        showMessage('auth', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
-                        return;
-                    }
-                    
-                    try {
-                        const { data, error } = await supabaseAuth.auth.signUp({
-                            email,
-                            password,
-                            options: {
-                                data: {
-                                    first_name: firstname,
-                                    last_name: lastname,
-                                    surf_level: level,
-                                    full_name: `${firstname} ${lastname}`
-                                }
-                            }
-                        });
-                        
-                        if (error) throw error;
-                        
-                        showMessage('auth', 'success', 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte.');
-                        
-                        if (data.user) {
-                            const { error: profileError } = await supabaseAuth
+                    showMessage('auth', 'success', `Inscription réussie ! Profil à configurer manuellement. Erreur profil: ${profileError.message}`);
+                } else {
+                    console.log('Profil créé avec succès:', profileData);
+                    showMessage('auth', 'success', 'Inscription réussie ! Profil créé avec succès. Vérifiez votre email pour confirmer votre compte.');
+                }
+                
+            } catch (profileException) {
+                console.error('Exception création profil:', profileException);
+                showMessage('auth', 'success', `Inscription réussie ! Erreur création profil: ${profileException.message}`);
+            }
+            
+            currentUser = data.user;
+            console.log('currentUser mis à jour:', currentUser.id);
+            
+            if (window.dataManager) {
+                window.dataManager.currentUserId = data.user.id;
+                console.log('dataManager.currentUserId mis à jour');
+            }
+        } else {
+            console.warn('Pas de données utilisateur retournées par signUp');
+            showMessage('auth', 'success', 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte.');
+        }
+        
+        console.log('handleRegister() terminé avec succès');
+        
+    } catch (error) {
+        console.error('Erreur globale inscription:', {
+            error,
+            message: error.message,
+            stack: error.stack
+        });
+        showMessage('auth', 'error', `Erreur: ${error.message}`);
+    }
+}
     .from('profiles')
     .insert([{
         id: data.user.id,
