@@ -1036,66 +1036,45 @@
                 }
                 
                 async function handleRegister() {
-                if (!supabaseAuth) {
-                    showMessage('auth', 'error', 'Supabase non configuré');
-                    return;
-                }
-                
-                const email = document.getElementById('register-email').value;
-                const password = document.getElementById('register-password').value;
-                const passwordConfirm = document.getElementById('register-password-confirm').value;
-                const firstname = document.getElementById('register-firstname').value;
-                const lastname = document.getElementById('register-lastname').value;
-                const level = document.getElementById('register-level').value;
-                
-                if (!email || !password || !firstname || !lastname || !level) {
-                    showMessage('auth', 'error', 'Veuillez remplir tous les champs');
-                    return;
-                }
-                
-                if (password !== passwordConfirm) {
-                    showMessage('auth', 'error', 'Les mots de passe ne correspondent pas');
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    showMessage('auth', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
-                    return;
-                }
-                
-                try {
-                    // INSCRIPTION SIMPLE avec metadata pour le trigger
-                    const { data, error } = await supabaseAuth.auth.signUp({
-                        email,
-                        password,
-                        options: {
-                            data: {
-                                first_name: firstname,
-                                last_name: lastname,
-                                surf_level: level,
-                                full_name: `${firstname} ${lastname}`
-                            }
-                        }
-                    });
-                    
-                    if (error) throw error;
-                    
-                    // Succès - Le profil sera créé automatiquement par le trigger
-                    showMessage('auth', 'success', 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte. Votre profil a été créé automatiquement.');
-                    
-                    // Mettre à jour les variables globales si l'utilisateur est créé
-                    if (data.user) {
-                        currentUser = data.user;
-                        if (window.dataManager) {
-                            window.dataManager.currentUserId = data.user.id;
-                        }
+                    if (!supabaseAuth) {
+                        showMessage('auth', 'error', 'Supabase non configuré');
+                        return;
                     }
                     
-                } catch (error) {
-                    console.error('Erreur inscription:', error);
-                    showMessage('auth', 'error', `Erreur: ${error.message}`);
-                }
-            }
+                    const email = document.getElementById('register-email').value;
+                    const password = document.getElementById('register-password').value;
+                    const passwordConfirm = document.getElementById('register-password-confirm').value;
+                    const firstname = document.getElementById('register-firstname').value;
+                    const lastname = document.getElementById('register-lastname').value;
+                    const level = document.getElementById('register-level').value;
+                    
+                    if (!email || !password || !firstname || !lastname || !level) {
+                        showMessage('auth', 'error', 'Veuillez remplir tous les champs');
+                        return;
+                    }
+                    
+                    if (password !== passwordConfirm) {
+                        showMessage('auth', 'error', 'Les mots de passe ne correspondent pas');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        showMessage('auth', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
+                        return;
+                    }
+                    
+                    try {
+                        const { data, error } = await supabaseAuth.auth.signUp({
+                            email,
+                            password,
+                            options: {
+                                data: {
+                                    first_name: firstname,
+                                    last_name: lastname,
+                                    surf_level: level,
+                                    full_name: `${firstname} ${lastname}`
+                                }
+                            }
                         });
                         
                         if (error) throw error;
