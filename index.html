@@ -1984,7 +1984,8 @@
                         .select();
         
                     if (error) throw error;
-                    this.cache.boards = null;  // Invalider le cache
+                    this.cache.boards = null;
+                    this.cache.lastUpdate.delete('boards');
                     return data;
                 } catch (error) {
                     console.warn('Erreur sauvegarde board Supabase:', error);
@@ -2980,6 +2981,10 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                 document.getElementById('board-shaper').value = '';
                 
                 showMessage('profiles', 'success', 'Board ajoutée avec succès !');
+                dataManager.cache.boards = null;
+                dataManager.cache.lastUpdate.delete('boards');
+                const boards = await dataManager.getUserBoards(currentUser.id);
+                displayUserBoards(boards);
                 
                 // Recharger et afficher
                 const boards = await dataManager.getUserBoards(currentUser.id);
