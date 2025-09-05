@@ -1281,7 +1281,8 @@
                         // Charger spots favoris et boards
                         await loadprofilesFavoriteSpots();
                         await loadUserBoards();
-                        
+                        await displayUserBoards(await dataManager.getUserBoards(currentUser.id));
+                                                
                         updateAvatarDisplay();
                         
                     } catch (error) {
@@ -2984,6 +2985,8 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                 
                 // Recharger boards dans tous les sélecteurs
                 await loadUserBoards();
+                const boards = await dataManager.getUserBoards(currentUser.id);
+                displayUserBoards(boards);
                 
             } catch (error) {
                 showMessage('profiles', 'error', `Erreur: ${error.message}`);
