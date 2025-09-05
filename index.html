@@ -1269,22 +1269,11 @@
                             }
                             
                             // Remplir les champs
-                            if (profiles.personal) {
-                                document.getElementById('profiles-email').value = currentUser.email;
-                                document.getElementById('profiles-nickname').value = profiles.personal.name || '';
-                            }
-                            
-                            if (profiles.surfLevel) {
-                                document.getElementById('profiles-surf-level').value = 
-                                    typeof profiles.surfLevel.overall === 'number' 
-                                        ? convertNumericToLevel(profiles.surfLevel.overall) 
-                                        : profiles.surfLevel.overall || 'intermediate';
-                            }
-                            
-                            if (profiles.preferences?.waveSize) {
-                                document.getElementById('profiles-wave-min').value = profiles.preferences.waveSize.min || 0.7;
-                                document.getElementById('profiles-wave-max').value = profiles.preferences.waveSize.max || 1.8;
-                            }
+                            document.getElementById('profiles-email').value = currentUser.email;
+                            document.getElementById('profiles-nickname').value = profiles.nickname || '';
+                            document.getElementById('profiles-surf-level').value = profiles.surf_level || 'intermediate';
+                            document.getElementById('profiles-wave-min').value = profiles.min_wave_height || 0.7;
+                            document.getElementById('profiles-wave-max').value = profiles.max_wave_height || 1.8;
                         }
                         
                         // Charger spots favoris et boards
