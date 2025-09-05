@@ -2957,23 +2957,21 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
             async function addBoard() {
             const name = document.getElementById('board-name').value;
             const size = document.getElementById('board-size').value;
-            const board_type = document.getElementById('board-type').value;  // CORRECTION: board_type
+            const board_type = document.getElementById('board-type').value;
             const shaper = document.getElementById('board-shaper').value;
             
-            if (!name || !size || !board_type || !shaper) {  // CORRECTION: shaper requis
+            if (!name || !size || !board_type || !shaper) {
                 showMessage('profiles', 'error', 'Veuillez remplir tous les champs');
                 return;
             }
             
             try {
-                const board = { 
-                    name, 
-                    size, 
-                    board_type,  // CORRECTION: board_type au lieu de type
-                    shaper 
-                };
+                const board = { name, size, board_type, shaper };
+                await dataManager.saveUserBoard(currentUser.id, board);
                 
-                await dataManager.saveUserBoard(currentUser.id, board);  // CORRECTION: currentUser.id
+                // CORRECTION CRITIQUE : Invalider le cache
+                dataManager.cache.boards = null;
+                dataManager.cache.lastUpdate.delete('boards');
                 
                 // Reset form
                 document.getElementById('board-name').value = '';
@@ -2983,8 +2981,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                 
                 showMessage('profiles', 'success', 'Board ajoutée avec succès !');
                 
-                // Recharger boards dans tous les sélecteurs
-                await loadUserBoards();
+                // Recharger et afficher
                 const boards = await dataManager.getUserBoards(currentUser.id);
                 displayUserBoards(boards);
                 
