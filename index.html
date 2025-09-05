@@ -1280,8 +1280,8 @@
                         
                         // Charger spots favoris et boards
                         await loadprofilesFavoriteSpots();
-                        await loadUserBoards();
-                        await displayUserBoards(await dataManager.getUserBoards(currentUser.id));
+                        const boards = await dataManager.getUserBoards(currentUser.id);
+                        displayUserBoards(boards);
                                                 
                         updateAvatarDisplay();
                         
@@ -2262,12 +2262,6 @@
             try {
                 // Charger spots hiérarchiques
                 await loadSpotsHierarchy();
-                
-                // Charger boards utilisateur
-                await loadUserBoards();
-                
-                // Charger profil
-                await loadprofiles();
 
                 // Charger aussi les favoris
                 await loadFavoriteSpots();
