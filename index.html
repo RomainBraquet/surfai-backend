@@ -1240,16 +1240,7 @@
                     if (!currentUser || !window.dataManager) return;
                     
                     try {
-                        const { data: profiles, error } = await dataManager.supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', currentUser.id)
-                        .single();
-                    
-                    if (error) {
-                        console.error('Erreur profil:', error);
-                        return;
-                    }
+                        const profiles = await dataManager.getUserProfile(currentUser.id);
                         
                         if (profiles) {
                             document.getElementById('profiles-display-name').textContent = 
@@ -1269,17 +1260,28 @@
                             }
                             
                             // Remplir les champs
-                            document.getElementById('profiles-email').value = currentUser.email;
-                            document.getElementById('profiles-nickname').value = profiles.nickname || '';
-                            document.getElementById('profiles-surf-level').value = profiles.surf_level || 'intermediate';
-                            document.getElementById('profiles-wave-min').value = profiles.min_wave_height || 0.7;
-                            document.getElementById('profiles-wave-max').value = profiles.max_wave_height || 1.8;
+                            if (profiles.personal) {
+                                document.getElementById('profiles-email').value = currentUser.email;
+                                document.getElementById('profiles-nickname').value = profiles.personal.name || '';
+                            }
+                            
+                            if (profiles.surfLevel) {
+                                document.getElementById('profiles-surf-level').value = 
+                                    typeof profiles.surfLevel.overall === 'number' 
+                                        ? convertNumericToLevel(profiles.surfLevel.overall) 
+                                        : profiles.surfLevel.overall || 'intermediate';
+                            }
+                            
+                            if (profiles.preferences?.waveSize) {
+                                document.getElementById('profiles-wave-min').value = profiles.preferences.waveSize.min || 0.7;
+                                document.getElementById('profiles-wave-max').value = profiles.preferences.waveSize.max || 1.8;
+                            }
                         }
                         
                         // Charger spots favoris et boards
                         await loadprofilesFavoriteSpots();
-                        const boards = await dataManager.getUserBoards(currentUser.id);
-                        displayUserBoards(boards);
+                        await loadUserBoards();
+                        await displayUserBoards(await dataManager.getUserBoards(currentUser.id));
                                                 
                         updateAvatarDisplay();
                         
@@ -2260,6 +2262,12 @@
             try {
                 // Charger spots hiérarchiques
                 await loadSpotsHierarchy();
+                
+                // Charger boards utilisateur
+                await loadUserBoards();
+                
+                // Charger profil
+                await loadprofiles();
 
                 // Charger aussi les favoris
                 await loadFavoriteSpots();
