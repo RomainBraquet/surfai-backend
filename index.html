@@ -2970,7 +2970,7 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                 const board = { name, size, board_type, shaper };
                 await dataManager.saveUserBoard(currentUser.id, board);
                 
-                // CORRECTION CRITIQUE : Invalider le cache
+                // *** CORRECTION CRITIQUE : Invalider le cache ***
                 dataManager.cache.boards = null;
                 dataManager.cache.lastUpdate.delete('boards');
                 
@@ -2981,12 +2981,8 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                 document.getElementById('board-shaper').value = '';
                 
                 showMessage('profiles', 'success', 'Board ajoutée avec succès !');
-                dataManager.cache.boards = null;
-                dataManager.cache.lastUpdate.delete('boards');
-                const boards = await dataManager.getUserBoards(currentUser.id);
-                displayUserBoards(boards);
                 
-                // Recharger et afficher
+                // Recharger et afficher immédiatement
                 const boards = await dataManager.getUserBoards(currentUser.id);
                 displayUserBoards(boards);
                 
