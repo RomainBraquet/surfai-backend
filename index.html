@@ -1479,16 +1479,37 @@
                 }
                                 
                 async function loadUserBoards() {
-                    if (!window.dataManager) return;
-                    
-                    try {
-                        const boards = await dataManager.getUserBoards(currentUser.id);
-                        displayUserBoards(boards);
-                        
-                    } catch (error) {
-                        console.error('Erreur chargement boards:', error);
-                    }
+                if (!window.dataManager || !currentUser) {
+                    console.log('dataManager ou currentUser manquant');
+                    return;
                 }
+                
+                try {
+                    const userId = currentUser.id;
+                    console.log('loadUserBoards pour userId:', userId);
+                    
+                    const boards = await dataManager.getUserBoards(userId);
+                    console.log('Boards chargées:', boards);
+                    
+                    displayUserBoards(boards);
+                    
+                    // Mettre à jour les sélecteurs
+                    const boardSelectors = ['session-board', 'forecast-board'];
+                    boardSelectors.forEach(selectorId => {
+                        const select = document.getElementById(selectorId);
+                        if (select) {
+                            select.innerHTML = '<option value="">Aucune board</option>';
+                            boards.forEach(board => {
+                                select.innerHTML += `<option value="${board.id}">${board.name} (${board.size})</option>`;
+                            });
+                        }
+                    });
+                    
+                } catch (error) {
+                    console.error('Erreur chargement boards:', error);
+                }
+            }
+
                 
                 function displayUserBoards(boards) {
                 const container = document.getElementById('user-boards-list');
@@ -1510,8 +1531,7 @@
                             <div class="board-name">${board.name}</div>
                             <div class="board-details">
                                 <strong>Taille:</strong> ${board.size} • 
-                                <strong>Type:</strong> ${board.board_type} • 
-                                <strong>Shaper:</strong> <span class="shaper-link" onclick="showShaperInfo('${board.shaper}')">${board.shaper}</span>
+                                <strong>Type:</strong> ${board.board_type}
                             </div>
                             <div style="margin-top: 10px;">
                                 <button onclick="editBoard('${board.id}')" class="button secondary" style="padding: 6px 12px; font-size: 0.9rem; margin-right: 10px;">
@@ -1942,32 +1962,38 @@
             }
 
             async getUserBoards(userId) {
-            if (this.cache.boards && this.isCacheValid('boards', this.staticCacheTimeout)) {
-                return this.cache.boards;
-            }
-        
+            // Toujours forcer un refresh pour debug
+            console.log('getUserBoards appelé pour userId:', userId);
+            
             if (this.supabase) {
                 try {
                     const { data: boards, error } = await this.supabase
                         .from('boards')
-                        .select('*')
-                        .eq('user_id', userId)  // CORRECTION: user_id au lieu de id
+                        .select('id, user_id, name, size, board_type, created_at')
+                        .eq('user_id', userId)
                         .order('created_at', { ascending: false });
         
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Erreur Supabase boards:', error);
+                        throw error;
+                    }
+                    
+                    console.log('Boards récupérées depuis Supabase:', boards);
                     this.cache.boards = boards || [];
                     this.cache.lastUpdate.set('boards', Date.now());
                     return this.cache.boards;
                 } catch (error) {
                     console.warn('Erreur boards Supabase:', error);
+                    this.cache.boards = [];
+                    return [];
                 }
             }
-        
-            // Fallback localStorage
-            const localBoards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
-            this.cache.boards = localBoards;
-            return localBoards;
-        }
+
+    // Fallback localStorage si pas de Supabase
+    const localBoards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
+    this.cache.boards = localBoards;
+    return localBoards;
+}
 
             async saveUserBoard(userId, board) {
             if (this.supabase) {
@@ -1991,15 +2017,49 @@
                     console.warn('Erreur sauvegarde board Supabase:', error);
                 }
             }
+            
+            // 2. Corriger saveUserBoard avec le bon schéma
+            async saveUserBoard(userId, board) {
+                console.log('saveUserBoard appelé:', { userId, board });
+                
+                if (this.supabase) {
+                    try {
+                        const { data, error } = await this.supabase
+                            .from('boards')
+                            .insert([{
+                                user_id: userId,
+                                name: board.name,
+                                size: board.size,
+                                board_type: board.board_type
+                                // Note: pas de champ 'shaper' dans votre schéma
+                            }])
+                            .select();
+            
+                        if (error) {
+                            console.error('Erreur insertion board:', error);
+                            throw error;
+                        }
+                        
+                        console.log('Board sauvegardée:', data);
+                        
+                        // Invalider le cache
+                        this.cache.boards = null;
+                        this.cache.lastUpdate.delete('boards');
+                        return data;
+                    } catch (error) {
+                        console.warn('Erreur sauvegarde board Supabase:', error);
+                        throw error;
+                    }
+                }
         
-            // Fallback localStorage
-            const boards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
-            const newBoard = { ...board, id: Date.now() };
-            boards.push(newBoard);
-            localStorage.setItem('surfai_boards', JSON.stringify(boards));
-            this.cache.boards = null;
-            return [newBoard];
-        }
+                // Fallback localStorage
+                const boards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
+                const newBoard = { ...board, id: Date.now(), user_id: userId };
+                boards.push(newBoard);
+                localStorage.setItem('surfai_boards', JSON.stringify(boards));
+                this.cache.boards = null;
+                return [newBoard];
+            }
 
             // PRÉDICTIONS PERSONNALISÉES
             async getPersonalizedPrediction(userId, spotId, boardId = null) {
@@ -2959,20 +3019,21 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
             const name = document.getElementById('board-name').value;
             const size = document.getElementById('board-size').value;
             const board_type = document.getElementById('board-type').value;
-            const shaper = document.getElementById('board-shaper').value;
+            // Retirer 'shaper' car pas dans le schéma
             
-            if (!name || !size || !board_type || !shaper) {
-                showMessage('profiles', 'error', 'Veuillez remplir tous les champs');
+            if (!name || !size || !board_type) {
+                showMessage('profiles', 'error', 'Veuillez remplir tous les champs obligatoires');
                 return;
             }
             
             try {
-                const board = { name, size, board_type, shaper };
-                await dataManager.saveUserBoard(currentUser.id, board);
+                const board = { name, size, board_type };
                 
-                // *** CORRECTION CRITIQUE : Invalider le cache ***
-                dataManager.cache.boards = null;
-                dataManager.cache.lastUpdate.delete('boards');
+                // Utiliser currentUser.id (cohérent avec l'auth Supabase)
+                const userId = currentUser.id;
+                console.log('Ajout board pour userId:', userId);
+                
+                await dataManager.saveUserBoard(userId, board);
                 
                 // Reset form
                 document.getElementById('board-name').value = '';
@@ -2982,11 +3043,11 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                 
                 showMessage('profiles', 'success', 'Board ajoutée avec succès !');
                 
-                // Recharger et afficher immédiatement
-                const boards = await dataManager.getUserBoards(currentUser.id);
-                displayUserBoards(boards);
+                // Recharger immédiatement
+                await loadUserBoards();
                 
             } catch (error) {
+                console.error('Erreur addBoard:', error);
                 showMessage('profiles', 'error', `Erreur: ${error.message}`);
             }
         }
