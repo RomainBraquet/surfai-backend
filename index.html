@@ -1036,156 +1036,155 @@
                 }
                 
                 async function handleRegister() {
-    console.log('Début handleRegister()');
-    
-    if (!supabaseAuth) {
-        console.error('supabaseAuth non configuré');
-        showMessage('auth', 'error', 'Supabase non configuré');
-        return;
-    }
-    
-    const email = document.getElementById('register-email').value;
-    const password = document.getElementById('register-password').value;
-    const passwordConfirm = document.getElementById('register-password-confirm').value;
-    const firstname = document.getElementById('register-firstname').value;
-    const lastname = document.getElementById('register-lastname').value;
-    const level = document.getElementById('register-level').value;
-    
-    console.log('Données formulaire récupérées:', {
-        email,
-        firstname,
-        lastname,
-        level,
-        passwordLength: password.length
-    });
-    
-    if (!email || !password || !firstname || !lastname || !level) {
-        console.warn('Champs manquants');
-        showMessage('auth', 'error', 'Veuillez remplir tous les champs');
-        return;
-    }
-    
-    if (password !== passwordConfirm) {
-        console.warn('Mots de passe différents');
-        showMessage('auth', 'error', 'Les mots de passe ne correspondent pas');
-        return;
-    }
-    
-    if (password.length < 6) {
-        console.warn('Mot de passe trop court');
-        showMessage('auth', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
-        return;
-    }
-    
-    try {
-        console.log('Tentative inscription Supabase Auth...');
-        
-        const { data, error } = await supabaseAuth.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    first_name: firstname,
-                    last_name: lastname,
-                    surf_level: level,
-                    full_name: `${firstname} ${lastname}`
+                console.log('Début handleRegister()');
+                
+                if (!supabaseAuth) {
+                    console.error('supabaseAuth non configuré');
+                    showMessage('auth', 'error', 'Supabase non configuré');
+                    return;
                 }
-            }
-        });
-        
-        if (error) {
-            console.error('Erreur inscription auth:', error);
-            throw error;
-        }
-        
-        console.log('Inscription auth réussie:', {
-            userId: data.user?.id,
-            email: data.user?.email,
-            needsConfirmation: !data.user?.email_confirmed_at
-        });
-        
-        if (data.user) {
-            console.log('Création profil pour utilisateur:', data.user.id);
-            
-            try {
-                console.log('Données profil à insérer:', {
-                    id: data.user.id,
-                    surf_level: level,
-                    nickname: firstname,
-                    min_wave_height: 0.7,
-                    max_wave_height: 1.8
+                
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const passwordConfirm = document.getElementById('register-password-confirm').value;
+                const firstname = document.getElementById('register-firstname').value;
+                const lastname = document.getElementById('register-lastname').value;
+                const level = document.getElementById('register-level').value;
+                
+                console.log('Données formulaire récupérées:', {
+                    email,
+                    firstname,
+                    lastname,
+                    level,
+                    passwordLength: password.length
                 });
                 
-                const { data: profileData, error: profileError } = await supabaseAuth
-                    .from('profiles')
-                    .insert([{
-                        id: data.user.id,
-                        surf_level: level,
-                        min_wave_height: 0.7,
-                        max_wave_height: 1.8,
-                        nickname: firstname,
-                        board_types: [],
-                        selected_board_ids: []
-                    }])
-                    .select();
-                
-                if (profileError) {
-                    console.error('Erreur insertion profil:', {
-                        error: profileError,
-                        code: profileError.code,
-                        message: profileError.message,
-                        details: profileError.details,
-                        hint: profileError.hint
-                    });
-                    
-                    showMessage('auth', 'success', `Inscription réussie ! Profil à configurer manuellement. Erreur profil: ${profileError.message}`);
-                } else {
-                    console.log('Profil créé avec succès:', profileData);
-                    showMessage('auth', 'success', 'Inscription réussie ! Profil créé avec succès. Redirection vers votre profil...');
-                    
-                    // Redirection automatique vers la section profil après 2 secondes
-                    setTimeout(() => {
-                        showprofilesSection();
-                        showTab('profiles'); // Activer l'onglet profil
-                        loadUserprofiles(); // Charger les données du profil
-                    }, 2000);
+                if (!email || !password || !firstname || !lastname || !level) {
+                    console.warn('Champs manquants');
+                    showMessage('auth', 'error', 'Veuillez remplir tous les champs');
+                    return;
                 }
                 
-            } catch (profileException) {
-                console.error('Exception création profil:', profileException);
-                showMessage('auth', 'success', `Inscription réussie ! Erreur création profil: ${profileException.message}`);
+                if (password !== passwordConfirm) {
+                    console.warn('Mots de passe différents');
+                    showMessage('auth', 'error', 'Les mots de passe ne correspondent pas');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    console.warn('Mot de passe trop court');
+                    showMessage('auth', 'error', 'Le mot de passe doit contenir au moins 6 caractères');
+                    return;
+                }
+                
+                try {
+                    console.log('Tentative inscription Supabase Auth...');
+                    
+                    const { data, error } = await supabaseAuth.auth.signUp({
+                        email,
+                        password,
+                        options: {
+                            data: {
+                                first_name: firstname,
+                                last_name: lastname,
+                                surf_level: level,
+                                full_name: `${firstname} ${lastname}`
+                            }
+                        }
+                    });
+                    
+                    if (error) {
+                        console.error('Erreur inscription auth:', error);
+                        throw error;
+                    }
+                    
+                    console.log('Inscription auth réussie:', {
+                        userId: data.user?.id,
+                        email: data.user?.email,
+                        needsConfirmation: !data.user?.email_confirmed_at
+                    });
+                    
+                    if (data.user) {
+                        console.log('Création profil pour utilisateur:', data.user.id);
+                        
+                        try {
+                            console.log('Données profil à insérer:', {
+                                id: data.user.id,
+                                surf_level: level,
+                                nickname: firstname,
+                                min_wave_height: 0.7,
+                                max_wave_height: 1.8
+                            });
+                            
+                            const { data: profileData, error: profileError } = await supabaseAuth
+                            .from('profiles')
+                            .insert([{
+                                id: data.user.id,
+                                surf_level: level,
+                                min_wave_height: 0.7,
+                                max_wave_height: 1.8,
+                                nickname: firstname
+                                // board_types et selected_board_ids supprimés
+                            }])
+                            .select();
+                            
+                            if (profileError) {
+                                console.error('Erreur insertion profil:', {
+                                    error: profileError,
+                                    code: profileError.code,
+                                    message: profileError.message,
+                                    details: profileError.details,
+                                    hint: profileError.hint
+                                });
+                                
+                                showMessage('auth', 'success', `Inscription réussie ! Profil à configurer manuellement. Erreur profil: ${profileError.message}`);
+                            } else {
+                                console.log('Profil créé avec succès:', profileData);
+                                showMessage('auth', 'success', 'Inscription réussie ! Profil créé avec succès. Redirection vers votre profil...');
+                                
+                                // Redirection automatique vers la section profil après 2 secondes
+                                setTimeout(() => {
+                                    showprofilesSection();
+                                    showTab('profiles'); // Activer l'onglet profil
+                                    loadUserprofiles(); // Charger les données du profil
+                                }, 2000);
+                            }
+                            
+                        } catch (profileException) {
+                            console.error('Exception création profil:', profileException);
+                            showMessage('auth', 'success', `Inscription réussie ! Erreur création profil: ${profileException.message}`);
+                        }
+                        
+                        currentUser = data.user;
+                        console.log('currentUser mis à jour:', currentUser.id);
+                        
+                        if (window.dataManager) {
+                            window.dataManager.currentUserId = data.user.id;
+                            console.log('dataManager.currentUserId mis à jour');
+                        }
+                        
+                    } else {
+                        console.warn('Pas de données utilisateur retournées par signUp');
+                        showMessage('auth', 'success', 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte.');
+                    }
+                    
+                    console.log('handleRegister() terminé avec succès');
+                    
+                } catch (error) {
+                    console.error('Erreur globale inscription:', {
+                        error,
+                        message: error.message,
+                        stack: error.stack
+                    });
+                    
+                    // Gestion spécifique pour utilisateur déjà existant
+                    if (error.message && error.message.includes('User already registered')) {
+                        showMessage('auth', 'error', `Cet email est déjà utilisé. <a href="#" onclick="switchAuthTab('login')" style="color: #667eea; text-decoration: underline;">Se connecter ici</a>`);
+                    } else {
+                        showMessage('auth', 'error', `Erreur: ${error.message}`);
+                    }
+                }
             }
-            
-            currentUser = data.user;
-            console.log('currentUser mis à jour:', currentUser.id);
-            
-            if (window.dataManager) {
-                window.dataManager.currentUserId = data.user.id;
-                console.log('dataManager.currentUserId mis à jour');
-            }
-            
-        } else {
-            console.warn('Pas de données utilisateur retournées par signUp');
-            showMessage('auth', 'success', 'Inscription réussie ! Vérifiez votre email pour confirmer votre compte.');
-        }
-        
-        console.log('handleRegister() terminé avec succès');
-        
-    } catch (error) {
-        console.error('Erreur globale inscription:', {
-            error,
-            message: error.message,
-            stack: error.stack
-        });
-        
-        // Gestion spécifique pour utilisateur déjà existant
-        if (error.message && error.message.includes('User already registered')) {
-            showMessage('auth', 'error', `Cet email est déjà utilisé. <a href="#" onclick="switchAuthTab('login')" style="color: #667eea; text-decoration: underline;">Se connecter ici</a>`);
-        } else {
-            showMessage('auth', 'error', `Erreur: ${error.message}`);
-        }
-    }
-}
             async function handleLogout() {
                 if (!supabaseAuth) return;
                 
@@ -1282,7 +1281,8 @@
                         // Charger spots favoris et boards
                         await loadprofilesFavoriteSpots();
                         await loadUserBoards();
-                        
+                        await displayUserBoards(await dataManager.getUserBoards(currentUser.id));
+                                                
                         updateAvatarDisplay();
                         
                     } catch (error) {
@@ -1491,42 +1491,42 @@
                 }
                 
                 function displayUserBoards(boards) {
-                    const container = document.getElementById('user-boards-list');
-                    
-                    if (boards.length === 0) {
-                        container.innerHTML = `
-                            <div class="board-card">
-                                <p>Aucune board enregistrée.</p>
-                                <p>Ajoutez vos boards ci-dessus !</p>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    let html = '';
-                    boards.forEach(board => {
-                        html += `
-                            <div class="board-card">
-                                <div class="board-name">${board.name}</div>
-                                <div class="board-details">
-                                    <strong>Taille:</strong> ${board.size} • 
-                                    <strong>Type:</strong> ${board.type} • 
-                                    <strong>Shaper:</strong> <span class="shaper-link" onclick="showShaperInfo('${board.shaper}')">${board.shaper}</span>
-                                </div>
-                                <div style="margin-top: 10px;">
-                                    <button onclick="editBoard(${board.id})" class="button secondary" style="padding: 6px 12px; font-size: 0.9rem; margin-right: 10px;">
-                                        Modifier
-                                    </button>
-                                    <button onclick="deleteBoard(${board.id})" class="button danger" style="padding: 6px 12px; font-size: 0.9rem;">
-                                        Supprimer
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    
-                    container.innerHTML = html;
+                const container = document.getElementById('user-boards-list');
+                
+                if (boards.length === 0) {
+                    container.innerHTML = `
+                        <div class="board-card">
+                            <p>Aucune board enregistrée.</p>
+                            <p>Ajoutez vos boards ci-dessus !</p>
+                        </div>
+                    `;
+                    return;
                 }
+                
+                let html = '';
+                boards.forEach(board => {
+                    html += `
+                        <div class="board-card">
+                            <div class="board-name">${board.name}</div>
+                            <div class="board-details">
+                                <strong>Taille:</strong> ${board.size} • 
+                                <strong>Type:</strong> ${board.board_type} • 
+                                <strong>Shaper:</strong> <span class="shaper-link" onclick="showShaperInfo('${board.shaper}')">${board.shaper}</span>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <button onclick="editBoard('${board.id}')" class="button secondary" style="padding: 6px 12px; font-size: 0.9rem; margin-right: 10px;">
+                                    Modifier
+                                </button>
+                                <button onclick="deleteBoard('${board.id}')" class="button danger" style="padding: 6px 12px; font-size: 0.9rem;">
+                                    Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            }
                 
                 // ===== FONCTIONS UTILITAIRES =====
                 
@@ -1942,63 +1942,64 @@
             }
 
             async getUserBoards(userId) {
-                if (this.cache.boards && this.isCacheValid('boards', this.staticCacheTimeout)) {
-                    return this.cache.boards;
-                }
-
-                if (this.supabase) {
-                    try {
-                        const { data: boards, error } = await this.supabase
-                            .from('boards')
-                            .select('*')
-                            .eq('id', userId)
-                            .order('created_at', { ascending: false });
-
-                        if (error) throw error;
-                        this.cache.boards = boards || [];
-                        this.cache.lastUpdate.set('boards', Date.now());
-                        return this.cache.boards;
-                    } catch (error) {
-                        console.warn('Erreur boards Supabase:', error);
-                    }
-                }
-
-                // Fallback localStorage
-                const localBoards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
-                this.cache.boards = localBoards;
-                return localBoards;
+            if (this.cache.boards && this.isCacheValid('boards', this.staticCacheTimeout)) {
+                return this.cache.boards;
             }
+        
+            if (this.supabase) {
+                try {
+                    const { data: boards, error } = await this.supabase
+                        .from('boards')
+                        .select('*')
+                        .eq('user_id', userId)  // CORRECTION: user_id au lieu de id
+                        .order('created_at', { ascending: false });
+        
+                    if (error) throw error;
+                    this.cache.boards = boards || [];
+                    this.cache.lastUpdate.set('boards', Date.now());
+                    return this.cache.boards;
+                } catch (error) {
+                    console.warn('Erreur boards Supabase:', error);
+                }
+            }
+        
+            // Fallback localStorage
+            const localBoards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
+            this.cache.boards = localBoards;
+            return localBoards;
+        }
 
             async saveUserBoard(userId, board) {
-                if (this.supabase) {
-                    try {
-                        const { data, error } = await this.supabase
-                            .from('boards')
-                            .insert([{
-                                user_id: userId,
-                                name: board.name,
-                                size: board.size,
-                                type: board.type,
-                                shaper: board.shaper
-                            }])
-                            .select();
-
-                        if (error) throw error;
-                        this.cache.boards = null;
-                        return data;
-                    } catch (error) {
-                        console.warn('Erreur sauvegarde board Supabase:', error);
-                    }
+            if (this.supabase) {
+                try {
+                    const { data, error } = await this.supabase
+                        .from('boards')
+                        .insert([{
+                            user_id: userId,
+                            name: board.name,
+                            size: board.size,
+                            board_type: board.board_type,  // CORRECTION: board_type au lieu de type
+                            shaper: board.shaper          // AJOUT: champ shaper manquant
+                        }])
+                        .select();
+        
+                    if (error) throw error;
+                    this.cache.boards = null;
+                    this.cache.lastUpdate.delete('boards');
+                    return data;
+                } catch (error) {
+                    console.warn('Erreur sauvegarde board Supabase:', error);
                 }
-
-                // Fallback localStorage
-                const boards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
-                const newBoard = { ...board, id: Date.now() };
-                boards.push(newBoard);
-                localStorage.setItem('surfai_boards', JSON.stringify(boards));
-                this.cache.boards = null;
-                return [newBoard];
             }
+        
+            // Fallback localStorage
+            const boards = JSON.parse(localStorage.getItem('surfai_boards') || '[]');
+            const newBoard = { ...board, id: Date.now() };
+            boards.push(newBoard);
+            localStorage.setItem('surfai_boards', JSON.stringify(boards));
+            this.cache.boards = null;
+            return [newBoard];
+        }
 
             // PRÉDICTIONS PERSONNALISÉES
             async getPersonalizedPrediction(userId, spotId, boardId = null) {
@@ -2954,20 +2955,24 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
         // GESTION BOARDS HARMONISÉE
         // ========================================
         
-        async function addBoard() {
+            async function addBoard() {
             const name = document.getElementById('board-name').value;
             const size = document.getElementById('board-size').value;
-            const type = document.getElementById('board-type').value;
+            const board_type = document.getElementById('board-type').value;
             const shaper = document.getElementById('board-shaper').value;
             
-            if (!name || !size || !type) {
-                showMessage('profile', 'error', 'Veuillez remplir tous les champs');
+            if (!name || !size || !board_type || !shaper) {
+                showMessage('profiles', 'error', 'Veuillez remplir tous les champs');
                 return;
             }
             
             try {
-                const board = { name, size, type };
-                await dataManager.saveUserBoard(dataManager.currentUserId, board);
+                const board = { name, size, board_type, shaper };
+                await dataManager.saveUserBoard(currentUser.id, board);
+                
+                // CORRECTION CRITIQUE : Invalider le cache
+                dataManager.cache.boards = null;
+                dataManager.cache.lastUpdate.delete('boards');
                 
                 // Reset form
                 document.getElementById('board-name').value = '';
@@ -2975,17 +2980,80 @@ function displayFilteredSpots(spotsHierarchy, filterCountry, filterRegion, filte
                 document.getElementById('board-type').value = '';
                 document.getElementById('board-shaper').value = '';
                 
-                showMessage('success', 'Board ajoutée avec succès !');
+                showMessage('profiles', 'success', 'Board ajoutée avec succès !');
+                dataManager.cache.boards = null;
+                dataManager.cache.lastUpdate.delete('boards');
+                const boards = await dataManager.getUserBoards(currentUser.id);
+                displayUserBoards(boards);
                 
-                // Recharger boards dans tous les sélecteurs
-                await loadUserBoards();
-                await loadprofiles();
+                // Recharger et afficher
+                const boards = await dataManager.getUserBoards(currentUser.id);
+                displayUserBoards(boards);
                 
             } catch (error) {
-                showMessage('error', `Erreur: ${error.message}`);
+                showMessage('profiles', 'error', `Erreur: ${error.message}`);
             }
         }
-
+            async function loadShapers() {
+                if (!dataManager.supabase) return [];
+                
+                try {
+                    const { data: shapers, error } = await dataManager.supabase
+                        .from('shapers')
+                        .select('*')
+                        .order('name');
+                        
+                    if (error) throw error;
+                    return shapers || [];
+                } catch (error) {
+                    console.warn('Erreur chargement shapers:', error);
+                    return [];
+                }
+            }
+            
+            async function populateShapersList() {
+                const shapers = await loadShapers();
+                const shaperSelect = document.getElementById('board-shaper');
+                
+                if (shaperSelect && shapers.length > 0) {
+                    // Convertir l'input en select avec options
+                    shaperSelect.innerHTML = '<option value="">Choisir un shaper</option>';
+                    shapers.forEach(shaper => {
+                        shaperSelect.innerHTML += `<option value="${shaper.name}">${shaper.name} - ${shaper.location}</option>`;
+                    });
+                }
+            }
+            
+            function showShaperInfo(shaperName) {
+                if (!dataManager.supabase) {
+                    showMessage('profiles', 'info', `Shaper: ${shaperName} (intégration complète à venir)`);
+                    return;
+                }
+                
+                // Rechercher les infos du shaper
+                dataManager.supabase
+                    .from('shapers')
+                    .select('*')
+                    .eq('name', shaperName)
+                    .single()
+                    .then(({ data: shaper, error }) => {
+                        if (error || !shaper) {
+                            showMessage('profiles', 'info', `Shaper: ${shaperName}`);
+                            return;
+                        }
+                        
+                        const info = `
+                            <strong>${shaper.name}</strong><br>
+                            📍 ${shaper.location}<br>
+                            🎯 Spécialité: ${shaper.specialty}<br>
+                            💰 Gamme de prix: ${shaper.price_range}<br>
+                            ${shaper.website ? `🌐 <a href="${shaper.website}" target="_blank">Site web</a>` : ''}
+                        `;
+                        
+                        showMessage('profiles', 'info', info);
+                    });
+            }
+        
         // ========================================
         // CONFIGURATION SUPABASE
         // ========================================
