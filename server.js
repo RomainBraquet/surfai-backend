@@ -13,20 +13,12 @@ const PORT = process.env.PORT || 3001;
 
 console.log('🏄‍♂️ Démarrage SurfAI Backend...');
 
-// 🛡️ Middlewares de sécurité
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    }
-  }
-}));
-
+// 🛡️ Middlewares (simplifiés pour Vercel serverless)
+if (!process.env.VERCEL) {
+  app.use(helmet());
+  app.use(morgan('combined'));
+}
 app.use(compression());
-app.use(morgan('combined'));
 
 // 🌐 CORS — autorise le frontend local (localhost et fichiers directs)
 app.use(cors({
