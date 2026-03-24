@@ -7,7 +7,6 @@ const { body, query, validationResult } = require('express-validator');
 const stormglassService = require('../services/stormglassService');
 const predictionService = require('../services/predictionService');
 const smartSessionsService = require('../services/smartSessionsService');
-const WeatherFormattingService = require('../services/weatherDataFormattingService');
 
 console.log('🌊 Chargement des routes météo avec Stormglass...');
 
@@ -31,12 +30,12 @@ router.get('/forecast', [
     }
 
     console.log('🌊 Requête prévisions météo reçue:', req.query);
-    
+
     const { lat, lng, days = 3, spot_id } = req.query;
-    
+
     // Utiliser coordonnées du spot ou coordonnées par défaut
     let coordinates = { lat, lng };
-    
+
     // Si pas de coordonnées mais un spot_id, récupérer les coordonnées du spot
     // TODO: Implémenter getSpotCoordinates avec Supabase
     if (spot_id && !lat && !lng) {
@@ -46,9 +45,9 @@ router.get('/forecast', [
         lng: process.env.DEFAULT_LNG || -1.5586
       };
     }
-    
+
     // Coordonnées par défaut si rien fourni
-    if (!coordinates.lat || !coordinates.lng) {
+    if (coordinates.lat === undefined || coordinates.lat === null || coordinates.lng === undefined || coordinates.lng === null) {
       coordinates = {
         lat: process.env.DEFAULT_LAT || 43.4832,
         lng: process.env.DEFAULT_LNG || -1.5586
@@ -57,14 +56,14 @@ router.get('/forecast', [
 
     // Appel à l'API Stormglass réelle
     const forecastData = await stormglassService.getForecast(
-      coordinates.lat, 
-      coordinates.lng, 
+      coordinates.lat,
+      coordinates.lng,
       parseInt(days)
     );
 
     // Enrichir avec l'intelligence prédictive
     const enrichedData = await predictionService.processForecastData(
-      forecastData, 
+      forecastData,
       req.query.user_level || 'intermediate'
     );
 
@@ -76,9 +75,8 @@ router.get('/forecast', [
       coordinates: coordinates
     };
 
-    const formattedData = WeatherFormattingService.formatForAPI(finalData);
-    res.json(formattedData);
-    
+    res.json(finalData);
+
   } catch (error) {
     console.error('❌ Erreur route forecast:', error);
     res.status(500).json({
@@ -94,9 +92,9 @@ router.get('/forecast', [
 router.post('/quality-prediction', async (req, res) => {
   try {
     console.log('🎯 Requête prédiction qualité reçue');
-    
+
     const { wave_height, wind_speed, wind_direction, user_level } = req.body;
-    
+
     // Validation basique
     if (!wave_height || !wind_speed) {
       return res.status(400).json({
@@ -104,24 +102,24 @@ router.post('/quality-prediction', async (req, res) => {
         message: 'wave_height et wind_speed sont requis'
       });
     }
-    
+
     // Calcul simple de qualité (on améliorera dans la partie suivante)
     let score = 1;
-    
+
     // Score selon hauteur de vagues
     if (wave_height >= 1 && wave_height <= 2.5) {
       score += 2;
     } else if (wave_height >= 0.8 && wave_height <= 3) {
       score += 1;
     }
-    
+
     // Score selon vent
     if (wind_speed < 15) {
       score += 2;
     } else if (wind_speed < 25) {
       score += 1;
     }
-    
+
     const prediction = {
       success: true,
       prediction: {
@@ -133,8 +131,8 @@ router.post('/quality-prediction', async (req, res) => {
           wind_speed: wind_speed,
           wind_direction: wind_direction || 'N/A'
         },
-        recommendations: score >= 4 ? 
-          '🏄‍♂️ Conditions excellentes ! Foncez !' : 
+        recommendations: score >= 4 ?
+          '🏄‍♂️ Conditions excellentes ! Foncez !' :
           '🤔 Conditions moyennes, restez prudent'
       },
       meta: {
@@ -142,9 +140,9 @@ router.post('/quality-prediction', async (req, res) => {
         calculation_time: new Date().toISOString()
       }
     };
-    
+
     res.json(prediction);
-    
+
   } catch (error) {
     console.error('❌ Erreur prédiction qualité:', error);
     res.status(500).json({
@@ -173,9 +171,9 @@ router.get('/smart-slots', [
     }
 
     console.log('🧠 Requête créneaux intelligents:', req.query);
-    
+
     const { lat, lng, days = 3, user_level = 'intermediate', spot = 'Biarritz' } = req.query;
-    
+
     // Coordonnées par défaut si non fournies
     const coordinates = {
       lat: lat || process.env.DEFAULT_LAT || 43.4832,
@@ -184,14 +182,14 @@ router.get('/smart-slots', [
 
     // Récupérer les prévisions météo
     const forecastData = await stormglassService.getForecast(
-      coordinates.lat, 
-      coordinates.lng, 
+      coordinates.lat,
+      coordinates.lng,
       parseInt(days)
     );
 
     // Enrichir avec l'intelligence prédictive
     const enrichedData = await predictionService.processForecastData(
-      forecastData, 
+      forecastData,
       user_level
     );
 
@@ -202,18 +200,16 @@ router.get('/smart-slots', [
       spot
     );
 
-    const responseData = {
-  success: true,
-  ...smartSlots,
-  coordinates: coordinates,
-  requestParams: {
-    days: parseInt(days),
-    userLevel: user_level,
-    spot: spot
-  }
-};
-const formattedData = WeatherFormattingService.formatForAPI(responseData);
-res.json(formattedData);
+    res.json({
+      success: true,
+      ...smartSlots,
+      coordinates: coordinates,
+      requestParams: {
+        days: parseInt(days),
+        userLevel: user_level,
+        spot: spot
+      }
+    });
 
   } catch (error) {
     console.error('❌ Erreur créneaux intelligents:', error);
@@ -246,7 +242,7 @@ router.get('/test', async (req, res) => {
     }
 
     res.json(basicTest);
-    
+
   } catch (error) {
     res.json({
       success: false,
@@ -268,12 +264,12 @@ router.get('/test-stormglass', async (req, res) => {
 
     console.log('🧪 Test complet Stormglass...');
     const testResult = await stormglassService.testConnection();
-    
+
     res.json({
       ...testResult,
       timestamp: new Date().toISOString()
     });
-    
+
   } catch (error) {
     console.error('❌ Erreur test Stormglass:', error);
     res.status(500).json({
@@ -287,14 +283,14 @@ router.get('/test-stormglass', async (req, res) => {
 // 🔄 Fonctions utilitaires pour enrichir les données
 function calculateForecastStats(forecast) {
   if (!forecast || forecast.length === 0) return null;
-  
+
   const validPoints = forecast.filter(p => p.waveHeight && p.windSpeed);
   if (validPoints.length === 0) return null;
-  
+
   const waveHeights = validPoints.map(p => p.waveHeight);
   const windSpeeds = validPoints.map(p => p.windSpeed);
   const qualities = validPoints.map(p => p.quality);
-  
+
   return {
     totalPoints: forecast.length,
     validPoints: validPoints.length,
@@ -318,7 +314,7 @@ function calculateForecastStats(forecast) {
 
 function findBestSessions(forecast) {
   if (!forecast || forecast.length === 0) return [];
-  
+
   return forecast
     .filter(p => p.quality >= 3.5) // Sessions de qualité
     .sort((a, b) => b.quality - a.quality) // Tri par qualité décroissante
@@ -330,8 +326,8 @@ function findBestSessions(forecast) {
       waveHeight: session.waveHeight,
       windSpeed: session.windSpeed,
       offshore: session.offshore,
-      recommendation: session.quality >= 4.5 ? '🏄‍♂️ Session excellente !' : 
-                     session.quality >= 4 ? '👍 Bonne session' : '🤔 Session correcte'
+      recommendation: session.quality >= 4.5 ? '🏄‍♂️ Session excellente !' :
+        session.quality >= 4 ? '👍 Bonne session' : '🤔 Session correcte'
     }));
 }
 // 🧪 TEST DEBUG
@@ -339,4 +335,48 @@ router.get('/debug-test', (req, res) => {
   console.log('🧪 Route debug-test appelée');
   res.json({ message: 'Route debug fonctionne !', timestamp: new Date().toISOString() });
 });
+
+// 📍 GET /api/v1/weather/current?lat=X&lng=Y — météo actuelle pour la home page
+router.get('/current', async (req, res) => {
+  try {
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({ success: false, error: 'lat et lng requis' });
+    }
+
+    const weatherData = await stormglassService.getForecast(lat, lng, 2);
+    const nowSec = Date.now() / 1000;
+    const current = weatherData.forecast && (
+      weatherData.forecast.find(p => p.timestamp >= nowSec) || weatherData.forecast[0]
+    );
+
+    const degreesToCompass = (deg) => {
+      if (deg == null) return '';
+      const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+      return dirs[Math.round(deg / 22.5) % 16];
+    };
+
+    // Marée via endpoint dédié Stormglass
+    const tideExtremes = await stormglassService.getTideExtremes(lat, lng, 2);
+    const nextTide = stormglassService.getNextTideFromExtremes(tideExtremes, nowSec);
+
+    res.json({
+      success: true,
+      weather: current ? {
+        waveHeight:    current.waveHeight,
+        windSpeed:     current.windSpeed,
+        windDirection: degreesToCompass(current.windDirection),
+        wavePeriod:    current.wavePeriod,
+        waterTemp:     current.waterTemp != null ? current.waterTemp : null,
+        tideHeight:    current.tideHeight,
+        tidePhase:     current.tidePhase,
+        nextTide,
+      } : null
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
