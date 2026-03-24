@@ -9,8 +9,7 @@ class StormglassService {
     this.baseURL = 'https://api.stormglass.io/v2';
 
     if (!this.apiKey) {
-      console.error('❌ STORMGLASS_API_KEY manquante dans .env');
-      throw new Error('STORMGLASS_API_KEY manquante dans les variables d\'environnement');
+      console.warn('⚠️ STORMGLASS_API_KEY manquante — les prévisions météo seront indisponibles');
     }
 
     // Configuration du client HTTP
