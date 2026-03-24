@@ -37,9 +37,10 @@ app.use(cors({
       'http://localhost:8080',
       'http://127.0.0.1:5500',
       'http://127.0.0.1:8080',
+      'https://surfai-app.vercel.app',
     ];
-    // Autorise : pas d'origin (Postman), "null" (file://), ou liste blanche
-    if (!origin || origin === 'null' || allowed.includes(origin)) {
+    // Autorise : pas d'origin (Postman), "null" (file://), .vercel.app, ou liste blanche
+    if (!origin || origin === 'null' || allowed.includes(origin) || origin?.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -103,8 +104,8 @@ app.use('*', (req, res) => {
   });
 });
 
-// 🚀 Démarrage du serveur
-app.listen(PORT, () => {
+// 🚀 Démarrage du serveur (seulement en local, pas sur Vercel)
+if (!process.env.VERCEL) app.listen(PORT, () => {
   console.log('\n🌊 ================================');
   console.log('🏄‍♂️ SurfAI Backend DÉMARRÉ !');
   console.log('🌊 ================================');
