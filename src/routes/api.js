@@ -284,6 +284,77 @@ router.get('/spots', async (req, res) => {
   }
 });
 
+// ─── ROUTES FAVORIS ──────────────────────────────────
+
+// GET /api/v1/favorites?userId=X
+router.get('/favorites', async (req, res) => {
+  try {
+    const db = require('../services/supabaseService');
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ success: false, error: 'userId requis' });
+    const { data: favRows, error } = await db.supabase
+      .from('user_favorite_spots')
+      .select('spot_id')
+      .eq('user_id', userId);
+    if (error) throw error;
+    const spotIds = (favRows || []).map(r => r.spot_id);
+    if (!spotIds.length) return res.json({ success: true, favorites: [] });
+    const { data: spots } = await db.supabase
+      .from('spots')
+      .select('id, name, city, lat, lng, surf_zone, country')
+      .in('id', spotIds);
+    res.json({ success: true, favorites: spots || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/v1/favorites/toggle { userId, spotId }
+router.post('/favorites/toggle', async (req, res) => {
+  try {
+    const db = require('../services/supabaseService');
+    const { userId, spotId } = req.body;
+    if (!userId || !spotId) return res.status(400).json({ success: false, error: 'userId et spotId requis' });
+
+    const { data: existing } = await db.supabase
+      .from('user_favorite_spots')
+      .select('spot_id')
+      .eq('user_id', userId)
+      .eq('spot_id', spotId);
+
+    if (existing?.length) {
+      await db.supabase.from('user_favorite_spots').delete().eq('user_id', userId).eq('spot_id', spotId);
+      res.json({ success: true, isFavorite: false });
+    } else {
+      await db.supabase.from('user_favorite_spots').upsert({ user_id: userId, spot_id: spotId });
+      res.json({ success: true, isFavorite: true });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/v1/spots/conditions?spotIds=id1,id2,id3
+router.get('/spots/conditions', async (req, res) => {
+  try {
+    const db = require('../services/supabaseService');
+    const openMeteo = require('../services/openMeteoService');
+    const spotIds = (req.query.spotIds || '').split(',').filter(Boolean);
+    if (!spotIds.length) return res.json({ success: true, conditions: {} });
+
+    const { data: spots } = await db.supabase
+      .from('spots')
+      .select('id, lat, lng')
+      .in('id', spotIds);
+
+    const validSpots = (spots || []).filter(s => s.lat && s.lng);
+    const conditions = await openMeteo.getConditions(validSpots);
+    res.json({ success: true, conditions });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ─── ROUTES PRÉDICTIONS ──────────────────────────────────
 
 // GET /api/v1/predictions/best-windows?userId=X&days=5
