@@ -97,6 +97,8 @@ function getBestWindows(context, maxWindows = 10) {
           swellHeight: best.conditions.swellHeight,
         },
         factors: best.factors,
+        whyGood: best.whyGood,
+        whyNotPerfect: best.whyNotPerfect,
         boardSuggestion: best.boardSuggestion,
         narrative: buildNarrative(best, spot),
         similarSession: best.similarSession,

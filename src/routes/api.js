@@ -248,6 +248,28 @@ router.post('/sessions/quick', async (req, res) => {
       meteo,
     });
 
+    // Snapshot communautaire anonymisé (si météo + rating disponibles)
+    if (meteo && rating && spotId) {
+      try {
+        const sessionDate = new Date(date || new Date());
+        await db.supabase.from('spot_session_snapshots').insert({
+          spot_id: spotId,
+          wave_height: meteo.waveHeight || null,
+          wind_speed: meteo.windSpeed || null,
+          wind_direction: meteo.windDirection || null,
+          wave_period: meteo.wavePeriod || null,
+          swell_height: meteo.swellHeight || null,
+          tide_phase: meteo.tidePhase || null,
+          rating_norm: Math.round((rating / 5) * 100) / 100,
+          month: sessionDate.getMonth() + 1,
+          year: sessionDate.getFullYear(),
+        });
+        console.log('📊 Snapshot communautaire créé');
+      } catch (snapError) {
+        console.warn('⚠️ Snapshot communautaire échoué:', snapError.message);
+      }
+    }
+
     res.json({
       success: true,
       message: meteo ? 'Session enregistrée avec météo capturée automatiquement' : 'Session enregistrée (météo non disponible)',
