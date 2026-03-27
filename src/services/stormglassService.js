@@ -23,23 +23,80 @@ class StormglassService {
       timeout: 15000 // 15 secondes timeout
     });
 
-    // 💾 Cache mémoire — évite de consommer les appels Stormglass (free tier : 10/jour)
+    // 💾 Cache double : mémoire (rapide) + Supabase (persiste entre redémarrages)
     this.cache = new Map();
     this.CACHE_DURATION_MS = 6 * 60 * 60 * 1000; // 6 heures
+    this.supabase = null; // initialisé au premier appel
 
     console.log('✅ Service Stormglass initialisé');
+  }
+
+  // Initialiser le client Supabase pour le cache persistant
+  getSupabase() {
+    if (!this.supabase) {
+      try {
+        const { createClient } = require('@supabase/supabase-js');
+        const url = process.env.SUPABASE_URL;
+        const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+        if (url && key) this.supabase = createClient(url, key);
+      } catch(e) { /* pas de Supabase = cache mémoire uniquement */ }
+    }
+    return this.supabase;
+  }
+
+  // Lire depuis le cache Supabase
+  async getFromSupabaseCache(cacheKey) {
+    const sb = this.getSupabase();
+    if (!sb) return null;
+    try {
+      const { data } = await sb
+        .from('forecast_cache')
+        .select('data, cached_at')
+        .eq('cache_key', cacheKey)
+        .gt('expires_at', new Date().toISOString())
+        .single();
+      if (data) {
+        const ageMin = Math.round((Date.now() - new Date(data.cached_at).getTime()) / 60000);
+        console.log(`💾 Cache Supabase utilisé (${ageMin}min)`);
+        return data.data;
+      }
+    } catch(e) { /* cache miss */ }
+    return null;
+  }
+
+  // Écrire dans le cache Supabase
+  async writeToSupabaseCache(cacheKey, forecastData) {
+    const sb = this.getSupabase();
+    if (!sb) return;
+    try {
+      const now = new Date();
+      const expires = new Date(now.getTime() + this.CACHE_DURATION_MS);
+      await sb.from('forecast_cache').upsert({
+        cache_key: cacheKey,
+        data: forecastData,
+        cached_at: now.toISOString(),
+        expires_at: expires.toISOString(),
+      });
+    } catch(e) { console.warn('⚠️ Écriture cache Supabase échouée:', e.message); }
   }
 
   // 🌊 Récupérer prévisions météo marine
   async getForecast(lat, lng, days = 3) {
     try {
-      // Vérifier le cache avant d'appeler l'API
+      // Vérifier le cache mémoire (rapide)
       const cacheKey = `${lat.toFixed(4)}-${lng.toFixed(4)}-${days}`;
       const cached = this.cache.get(cacheKey);
       if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION_MS) {
         const ageMin = Math.round((Date.now() - cached.timestamp) / 60000);
-        console.log(`💾 Cache Stormglass utilisé (${ageMin}min) — appel API économisé`);
+        console.log(`💾 Cache mémoire utilisé (${ageMin}min)`);
         return cached.data;
+      }
+
+      // Vérifier le cache Supabase (persiste entre redémarrages)
+      const supabaseCached = await this.getFromSupabaseCache(cacheKey);
+      if (supabaseCached) {
+        this.cache.set(cacheKey, { data: supabaseCached, timestamp: Date.now() });
+        return supabaseCached;
       }
 
       console.log(`🌊 Appel Stormglass API: ${lat}, ${lng} (${days} jours)`);
@@ -79,9 +136,10 @@ class StormglassService {
         }
       };
 
-      // Sauvegarder en cache
+      // Sauvegarder en cache mémoire + Supabase
       this.cache.set(cacheKey, { data: result, timestamp: Date.now() });
-      console.log(`💾 Résultat mis en cache pour 6h (clé: ${cacheKey})`);
+      this.writeToSupabaseCache(cacheKey, result); // async, pas d'await (non bloquant)
+      console.log(`💾 Résultat mis en cache mémoire + Supabase (clé: ${cacheKey})`);
 
       return result;
 
