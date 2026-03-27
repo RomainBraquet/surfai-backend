@@ -109,10 +109,31 @@ function getBestWindows(context, maxWindows = 10) {
     .sort((a, b) => b.score - a.score)
     .slice(0, maxWindows);
 
+  // Scores heure par heure (6h-21h) pour l'affichage détaillé
+  const hourlyScores = scored
+    .filter(s => {
+      const h = new Date(s.time).getHours();
+      return h >= 6 && h <= 21;
+    })
+    .map(s => ({
+      time: s.time,
+      hour: new Date(s.time).getHours(),
+      date: s.time.split('T')[0],
+      score: s.score,
+      conditions: {
+        waveHeight: s.conditions.waveHeight,
+        windSpeed: s.conditions.windSpeed,
+        windDirection: s.conditions.windDirection,
+        wavePeriod: s.conditions.wavePeriod,
+        tidePhase: s.conditions.tidePhase,
+      },
+    }));
+
   return {
     spot: { id: spot.id, name: spot.name, city: spot.city, lat: spot.lat, lng: spot.lng },
     generatedAt: new Date().toISOString(),
     windows,
+    hourlyScores,
     calibrationLevel: scored[0]?.calibrationLevel || 0.10,
     totalSessionsAnalyzed: pastSessions.filter(s => s.meteo).length,
   };
