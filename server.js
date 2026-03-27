@@ -37,6 +37,7 @@ app.use(cors({
       'http://localhost:8080',
       'http://127.0.0.1:5500',
       'http://127.0.0.1:8080',
+      'https://surfai-app.vercel.app',
     ];
     // Autorise : pas d'origin (Postman), "null" (file://), ou liste blanche
     if (!origin || origin === 'null' || allowed.includes(origin)) {
