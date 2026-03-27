@@ -13,12 +13,20 @@ const PORT = process.env.PORT || 3001;
 
 console.log('🏄‍♂️ Démarrage SurfAI Backend...');
 
-// 🛡️ Middlewares (simplifiés pour Vercel serverless)
-if (!process.env.VERCEL) {
-  app.use(helmet());
-  app.use(morgan('combined'));
-}
+// 🛡️ Middlewares de sécurité
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    }
+  }
+}));
+
 app.use(compression());
+app.use(morgan('combined'));
 
 // 🌐 CORS — autorise le frontend local (localhost et fichiers directs)
 app.use(cors({
@@ -29,10 +37,9 @@ app.use(cors({
       'http://localhost:8080',
       'http://127.0.0.1:5500',
       'http://127.0.0.1:8080',
-      'https://surfai-app.vercel.app',
     ];
-    // Autorise : pas d'origin (Postman), "null" (file://), .vercel.app, ou liste blanche
-    if (!origin || origin === 'null' || allowed.includes(origin) || origin?.endsWith('.vercel.app')) {
+    // Autorise : pas d'origin (Postman), "null" (file://), ou liste blanche
+    if (!origin || origin === 'null' || allowed.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -96,8 +103,8 @@ app.use('*', (req, res) => {
   });
 });
 
-// 🚀 Démarrage du serveur (seulement en local, pas sur Vercel)
-if (!process.env.VERCEL) app.listen(PORT, () => {
+// 🚀 Démarrage du serveur
+app.listen(PORT, () => {
   console.log('\n🌊 ================================');
   console.log('🏄‍♂️ SurfAI Backend DÉMARRÉ !');
   console.log('🌊 ================================');
