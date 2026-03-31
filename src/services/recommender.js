@@ -3,28 +3,74 @@
 
 const { scoreSlot } = require('./scorer');
 
-// Labels selon score
+// Labels selon score — honnêtes, pas artificiellement positifs
 function scoreLabel(score) {
   if (score >= 8.5) return 'Exceptionnel';
   if (score >= 7)   return 'Excellent';
   if (score >= 5.5) return 'Bon';
-  if (score >= 4)   return 'Correct';
-  return 'Faible';
+  if (score >= 4)   return 'Moyen';
+  if (score >= 2.5) return 'Médiocre';
+  return 'Mauvais';
 }
 
-// Narrative personnalisée
+// Narrative personnalisée — honnête, tient compte des caveats critiques
 function buildNarrative(scoredSlot, spot) {
-  const { similarSession, score } = scoredSlot;
-  // Référencer uniquement les sessions passées sur CE spot
-  if (similarSession?.meteo && similarSession?.spot_id === spot.id) {
+  const { similarSession, score, whyNotPerfect, whyGood, factors } = scoredSlot;
+  const caveats = whyNotPerfect || [];
+  const positives = whyGood || [];
+  const hasCriticalCaveat = caveats.length > 0;
+
+  // Détecter les problèmes spécifiques pour des messages ciblés
+  const hasBigWaves = caveats.some(c => /grosses|au-dessus/i.test(c));
+  const hasSmallWaves = caveats.some(c => /petites|en dessous/i.test(c));
+  const hasStrongWind = caveats.some(c => /vent fort|onshore/i.test(c));
+  const hasBadTide = caveats.some(c => /marée.*pas idéale/i.test(c));
+  const hasBadPeriod = caveats.some(c => /période courte/i.test(c));
+
+  // Référencer les sessions passées — seulement si score bon ET pas de caveat critique
+  if (score >= 7 && !hasCriticalCaveat && similarSession?.meteo && similarSession?.spot_id === spot.id) {
     const date = new Date(similarSession.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
     const stars = '★'.repeat(similarSession.rating);
     return `Rappelle ta session du ${date} ici — ${stars}`;
   }
-  if (score >= 8.5) return 'Conditions exceptionnelles pour ton niveau';
-  if (score >= 7)   return 'Excellente session en perspective';
-  if (score >= 5.5) return 'Bonne session possible';
-  return 'Conditions correctes';
+
+  // Score haut MAIS avec des caveats → nuancer le message
+  if (score >= 7 && hasCriticalCaveat) {
+    if (hasBigWaves) return 'Ça envoie du lourd — réservé aux jours où tu te sens en forme';
+    if (hasStrongWind) return 'Bon potentiel mais le vent gâche la fête';
+    if (hasBadTide) return 'Bon setup mais la marée n\'est pas idéale';
+    if (hasBadPeriod) return 'Des vagues mais une houle courte et désorganisée';
+    return 'Conditions intéressantes malgré quelques bémols';
+  }
+
+  // Messages nets selon le score — sans caveat
+  if (score >= 8.5) return 'Conditions exceptionnelles — fonce !';
+  if (score >= 7) return 'Très bonne session en vue';
+  if (score >= 5.5 && !hasCriticalCaveat) return 'Session sympa en perspective';
+
+  // Score moyen avec contexte
+  if (score >= 5.5 && hasCriticalCaveat) {
+    if (hasBigWaves) return 'Ça brasse — sortie à évaluer selon ton niveau';
+    if (hasSmallWaves) return 'Petit mais surfable — idéal longboard ou foil';
+    if (hasStrongWind) return 'Le vent complique les choses';
+    return 'Session possible mais pas idéale';
+  }
+
+  if (score >= 4) {
+    if (hasSmallWaves) return 'Vraiment petit — session galère en vue';
+    if (hasStrongWind) return 'Trop de vent — conditions hachées';
+    if (hasBigWaves) return 'Trop gros pour être fun';
+    return 'Conditions moyennes — faisable mais sans plus';
+  }
+
+  // Score < 4 : honnêtement mauvais
+  if (score >= 2.5) {
+    if (hasSmallWaves && hasStrongWind) return 'Flat et venté — journée off';
+    if (hasSmallWaves) return 'Pas de vagues — journée repos';
+    if (hasStrongWind) return 'Tempête — reste au chaud';
+    return 'Conditions médiocres — pas la peine d\'y aller';
+  }
+  return 'Conditions très mauvaises — oublie la session';
 }
 
 // Grouper les points horaires en fenêtres continues
@@ -97,6 +143,8 @@ function getBestWindows(context, maxWindows = 10) {
           wavePeriod: best.conditions.wavePeriod,
           tidePhase: best.conditions.tidePhase,
           swellHeight: best.conditions.swellHeight,
+          waterTemp: best.conditions.waterTemp,
+          airTemp: best.conditions.airTemp,
         },
         factors: best.factors,
         whyGood: best.whyGood,
@@ -126,6 +174,8 @@ function getBestWindows(context, maxWindows = 10) {
         windDirection: s.conditions.windDirection,
         wavePeriod: s.conditions.wavePeriod,
         tidePhase: s.conditions.tidePhase,
+        waterTemp: s.conditions.waterTemp,
+        airTemp: s.conditions.airTemp,
       },
     }));
 

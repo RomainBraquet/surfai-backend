@@ -108,7 +108,7 @@ class StormglassService {
       const params = {
         lat: parseFloat(lat),
         lng: parseFloat(lng),
-        params: 'waveHeight,wavePeriod,waveDirection,windSpeed,windDirection,swellHeight,swellPeriod,swellDirection,waterTemperature,seaLevel',
+        params: 'waveHeight,wavePeriod,waveDirection,windSpeed,windDirection,swellHeight,swellPeriod,swellDirection,waterTemperature,airTemperature,seaLevel',
         start: startTime,
         end: endTime,
         source: 'sg' // Source Stormglass prioritaire
@@ -189,6 +189,7 @@ class StormglassService {
         const swellHeight = getFirstValue('swellHeight');
         const swellPeriod = getFirstValue('swellPeriod');
         const waterTemp = getFirstValue('waterTemperature');
+        const airTemp = getFirstValue('airTemperature');
         const seaLevel = getFirstValue('seaLevel');
 
         // Calculs dérivés
@@ -214,6 +215,7 @@ class StormglassService {
           swellHeight: swellHeight ? Math.round(swellHeight * 10) / 10 : null,
           swellPeriod: swellPeriod ? Math.round(swellPeriod) : null,
           waterTemp: waterTemp ? Math.round(waterTemp * 10) / 10 : null,
+          airTemp: airTemp ? Math.round(airTemp * 10) / 10 : null,
           seaLevel: seaLevel != null ? Math.round(seaLevel * 100) / 100 : null,
           // Calculs
           offshore: offshore,

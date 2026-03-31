@@ -295,6 +295,38 @@ router.get('/sessions/list', async (req, res) => {
   }
 });
 
+// PUT /api/v1/sessions/:id → modifier une session
+router.put('/sessions/:id', async (req, res) => {
+  try {
+    const db = require('../services/supabaseService');
+    const { userId, rating, notes, date, time, board_id } = req.body;
+    if (!userId) return res.status(400).json({ success: false, error: 'userId requis' });
+    const updates = {};
+    if (rating !== undefined) updates.rating = rating;
+    if (notes !== undefined) updates.notes = notes;
+    if (date !== undefined) updates.date = date;
+    if (time !== undefined) updates.time = time;
+    if (board_id !== undefined) updates.board_id = board_id;
+    const session = await db.updateSession(req.params.id, userId, updates);
+    res.json({ success: true, session });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// DELETE /api/v1/sessions/:id?userId=X → supprimer une session
+router.delete('/sessions/:id', async (req, res) => {
+  try {
+    const db = require('../services/supabaseService');
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ success: false, error: 'userId requis' });
+    await db.deleteSession(req.params.id, userId);
+    res.json({ success: true, message: 'Session supprimée' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/v1/spots → liste des spots depuis Supabase
 router.get('/spots', async (req, res) => {
   try {

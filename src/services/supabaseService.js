@@ -176,6 +176,28 @@ async function getFavoriteSpots(userId) {
     .filter(Boolean);
 }
 
+async function updateSession(sessionId, userId, updates) {
+  const { data, error } = await supabase
+    .from('sessions')
+    .update(updates)
+    .eq('id', sessionId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+  if (error) throw new Error(`Erreur mise à jour session: ${error.message}`);
+  return data;
+}
+
+async function deleteSession(sessionId, userId) {
+  const { error } = await supabase
+    .from('sessions')
+    .delete()
+    .eq('id', sessionId)
+    .eq('user_id', userId);
+  if (error) throw new Error(`Erreur suppression session: ${error.message}`);
+  return true;
+}
+
 module.exports = {
   supabase,
   getSpots,
@@ -183,6 +205,8 @@ module.exports = {
   getSpotById,
   getSessions,
   createSession,
+  updateSession,
+  deleteSession,
   getProfile,
   upsertProfile,
   getBoards,

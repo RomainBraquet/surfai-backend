@@ -398,7 +398,19 @@ function scoreSlot(slot, context) {
     tideAdj +
     community.bonus;
 
-  const score = Math.round(Math.min(10, Math.max(0, rawScore)) * 10) / 10;
+  // Plafonnement réaliste : si les conditions de base (vent + vagues) sont mauvaises,
+  // l'historique ne peut pas sauver le score. Les conditions réelles priment.
+  const conditionsAvg = (windScore + wavesScore) / 2;
+  let cappedScore = rawScore;
+  if (conditionsAvg < 3) {
+    // Conditions désastreuses → score plafonné à 4 max
+    cappedScore = Math.min(rawScore, 4);
+  } else if (conditionsAvg < 4.5) {
+    // Conditions médiocres → score plafonné à 5.5 max
+    cappedScore = Math.min(rawScore, 5.5);
+  }
+
+  const score = Math.round(Math.min(10, Math.max(0, cappedScore)) * 10) / 10;
 
   const boardSuggestion = score >= 6 ? suggestBoard(slot, pastSessions, boards) : null;
 
