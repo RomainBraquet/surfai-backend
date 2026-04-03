@@ -513,6 +513,21 @@ router.get('/weather/current', async (req, res) => {
       }
     } catch (e) { /* fallback silencieux */ }
 
+    // Météo atmosphérique via Open-Meteo (température air + conditions)
+    let airTempOM = null;
+    let weatherCode = null;
+    try {
+      const axios = require('axios');
+      const omRes = await axios.get('https://api.open-meteo.com/v1/forecast', {
+        params: { latitude: lat, longitude: lng, current: 'temperature_2m,weather_code' },
+        timeout: 5000,
+      });
+      airTempOM = omRes.data?.current?.temperature_2m ?? null;
+      weatherCode = omRes.data?.current?.weather_code ?? null;
+    } catch (e) { /* fallback silencieux */ }
+
+    const airTemp = current?.airTemp ?? airTempOM;
+
     res.json({
       success: true,
       lat, lng,
@@ -522,6 +537,8 @@ router.get('/weather/current', async (req, res) => {
         windDirection: degreesToCompass(current.windDirection),
         wavePeriod:    current.wavePeriod,
         waterTemp:     current.waterTemp != null ? current.waterTemp : null,
+        airTemp:       airTemp != null ? Math.round(airTemp) : null,
+        weatherCode:   weatherCode,
         nextTide,
       } : null
     });
