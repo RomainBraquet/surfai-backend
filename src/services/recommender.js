@@ -97,6 +97,25 @@ function buildTimeWindow(slots) {
   };
 }
 
+// Calcul du coefficient de marée à partir des extremes (PM/BM)
+// Référence : amplitude moyenne vives-eaux à Brest = 6.1m (unité de hauteur SHOM)
+function computeTideCoeff(tideExtremes, date) {
+  if (!tideExtremes || tideExtremes.length < 2) return null;
+  // Trouver la PM et BM les plus proches de cette date
+  const dayStart = new Date(date + 'T00:00:00').getTime() / 1000;
+  const dayEnd = dayStart + 86400;
+  const dayExtremes = tideExtremes.filter(e => e.timestamp >= dayStart - 6*3600 && e.timestamp <= dayEnd + 6*3600);
+  const highs = dayExtremes.filter(e => e.type === 'high');
+  const lows = dayExtremes.filter(e => e.type === 'low');
+  if (!highs.length || !lows.length) return null;
+  const maxHigh = Math.max(...highs.map(e => e.height));
+  const minLow = Math.min(...lows.map(e => e.height));
+  const amplitude = maxHigh - minLow;
+  // Coeff = (amplitude / amplitude_ref_brest) * 70 + 20, borné 20-120
+  const coeff = Math.round((amplitude / 6.1) * 70 + 20);
+  return Math.max(20, Math.min(120, coeff));
+}
+
 // Fonction principale — retourne les meilleurs créneaux pour un spot
 function getBestWindows(context, maxWindows = 10) {
   const { spot, forecast, profile, pastSessions, boards } = context;
@@ -130,12 +149,15 @@ function getBestWindows(context, maxWindows = 10) {
     .map(slots => {
       const best = slots.reduce((a, b) => a.score > b.score ? a : b);
       const { timeWindow, peakHour } = buildTimeWindow(slots);
+      const date = best.time.split('T')[0];
+      const tideCoeff = computeTideCoeff(best.conditions.tideExtremes, date);
       return {
-        date: best.time.split('T')[0],
+        date,
         timeWindow,
         peakHour: `${peakHour}h`,
         score: best.score,
         scoreLabel: scoreLabel(best.score),
+        tideCoeff,
         conditions: {
           waveHeight: best.conditions.waveHeight,
           windSpeed: best.conditions.windSpeed,
