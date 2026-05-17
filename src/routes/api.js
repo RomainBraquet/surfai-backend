@@ -664,6 +664,33 @@ async function handleSendPredictions(req, res) {
           const errBody = await resendResponse.text();
           errors.push({ userId: profile.id, error: errBody });
         }
+
+        // Send push notification if mobile token exists
+        if (profile.expo_push_token) {
+          try {
+            const { Expo } = require('expo-server-sdk');
+            const expo = new Expo();
+            if (Expo.isExpoPushToken(profile.expo_push_token)) {
+              const bestSpot = spotResults.find(sr => sr.windows.length > 0);
+              if (bestSpot) {
+                const topScore = bestSpot.windows[0]?.score ? Math.round(bestSpot.windows[0].score * 10) : '?';
+                const [receipt] = await expo.sendPushNotificationsAsync([{
+                  to: profile.expo_push_token,
+                  title: 'SurfAI',
+                  body: `Score ${topScore}/10 a ${bestSpot.spot.name}`,
+                  data: { spotId: bestSpot.spot.id, score: topScore },
+                  sound: 'default',
+                }]);
+                if (receipt.status === 'error') {
+                  // Invalid token — clean up
+                  await db.supabase.from('profiles').update({ expo_push_token: null }).eq('id', profile.id);
+                }
+              }
+            }
+          } catch (pushErr) {
+            console.warn('Push notification failed for', profile.id, pushErr.message);
+          }
+        }
       } catch (userError) {
         errors.push({ userId: profile.id, error: userError.message });
       }
@@ -683,5 +710,29 @@ async function handleSendPredictions(req, res) {
 }
 router.post('/notifications/send-predictions', handleSendPredictions);
 router.get('/notifications/send-predictions', handleSendPredictions);
+
+// ─── PUSH NOTIFICATIONS ──────────────────────────────────
+
+// POST /api/v1/push-token — save Expo push token for mobile app
+router.post('/push-token', async (req, res) => {
+  try {
+    const db = require('../services/supabaseService');
+    const { userId, token } = req.body;
+    if (!userId || !token) {
+      return res.status(400).json({ success: false, error: 'userId and token required' });
+    }
+
+    await db.supabase
+      .from('profiles')
+      .update({ expo_push_token: token })
+      .eq('id', userId);
+
+    console.log(`📱 Push token saved for user ${userId}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur push-token:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 module.exports = router;

@@ -19,6 +19,7 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
+    "expo-server-sdk": "^3.13.0",
     "winston": "^3.11.0"
   },
   "devDependencies": {
