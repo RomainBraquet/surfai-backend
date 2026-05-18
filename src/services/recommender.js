@@ -3,74 +3,154 @@
 
 const { scoreSlot } = require('./scorer');
 
-// Labels selon score — honnêtes, pas artificiellement positifs
+// Labels selon score
 function scoreLabel(score) {
   if (score >= 8.5) return 'Exceptionnel';
-  if (score >= 7)   return 'Excellent';
-  if (score >= 5.5) return 'Bon';
+  if (score >= 7)   return 'Tres bon';
+  if (score >= 5.5) return 'Correct';
   if (score >= 4)   return 'Moyen';
-  if (score >= 2.5) return 'Médiocre';
-  return 'Mauvais';
+  if (score >= 2.5) return 'Faible';
+  return 'Plat';
 }
 
-// Narrative personnalisée — honnête, tient compte des caveats critiques
+// Pick un element au hasard dans un tableau (variete des textes)
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// Narrative coherente — construit UNE phrase a partir de tous les facteurs
+// Regle : on part du contexte dominant (la vague) puis on qualifie avec vent/maree/periode
 function buildNarrative(scoredSlot, spot) {
-  const { similarSession, score, whyNotPerfect, whyGood, factors } = scoredSlot;
+  const { score, whyNotPerfect, whyGood, conditions } = scoredSlot;
   const caveats = whyNotPerfect || [];
   const positives = whyGood || [];
-  const hasCriticalCaveat = caveats.length > 0;
 
-  // Détecter les problèmes spécifiques pour des messages ciblés
-  const hasBigWaves = caveats.some(c => /grosses|au-dessus/i.test(c));
-  const hasSmallWaves = caveats.some(c => /petites|en dessous/i.test(c));
-  const hasStrongWind = caveats.some(c => /vent fort|onshore/i.test(c));
-  const hasBadTide = caveats.some(c => /marée.*pas idéale/i.test(c));
-  const hasBadPeriod = caveats.some(c => /période courte/i.test(c));
+  // Extraire les conditions brutes pour etre precis
+  const waveH = conditions?.waveHeight || conditions?.swellHeight || 0;
+  const windSpd = conditions?.windSpeed || 0;
+  const period = conditions?.wavePeriod || 0;
+  const offshore = positives.some(p => /offshore/i.test(p));
+  const onshore = caveats.some(c => /onshore/i.test(c));
+  const strongWind = windSpd > 30;
+  const lightWind = windSpd < 12;
+  const longPeriod = period >= 11;
+  const shortPeriod = period > 0 && period < 7;
+  const smallWaves = waveH < 0.6;
+  const bigWaves = waveH > 2.5;
 
-  // Référencer les sessions passées — seulement si score bon ET pas de caveat critique
-  if (score >= 7 && !hasCriticalCaveat && similarSession?.meteo && similarSession?.spot_id === spot.id) {
-    const date = new Date(similarSession.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-    const stars = '★'.repeat(similarSession.rating);
-    return `Rappelle ta session du ${date} ici — ${stars}`;
+  // ── SCORE >= 8.5 : exceptionnel, tout est aligne ──
+  if (score >= 8.5) {
+    if (offshore && longPeriod) return pick([
+      'Houle longue, vent offshore — les planetes sont alignees',
+      'Combo parfait : beau swell et vent de terre',
+      'Les conditions revees — a ne pas rater'
+    ]);
+    if (offshore) return pick([
+      'Vent offshore et belles vagues — session premium',
+      'Vagues propres et bien formees — ca va etre beau',
+    ]);
+    return pick([
+      'Toutes les conditions sont reunies — fonce',
+      'Creneau en or — conditions au top',
+    ]);
   }
 
-  // Score haut MAIS avec des caveats → nuancer le message
-  if (score >= 7 && hasCriticalCaveat) {
-    if (hasBigWaves) return 'Ça envoie du lourd — réservé aux jours où tu te sens en forme';
-    if (hasStrongWind) return 'Bon potentiel mais le vent gâche la fête';
-    if (hasBadTide) return 'Bon setup mais la marée n\'est pas idéale';
-    if (hasBadPeriod) return 'Des vagues mais une houle courte et désorganisée';
-    return 'Conditions intéressantes malgré quelques bémols';
+  // ── SCORE 7-8.5 : tres bon, avec ou sans bemol ──
+  if (score >= 7) {
+    if (caveats.length === 0) {
+      if (longPeriod) return pick([
+        'Belle houle longue, conditions propres',
+        'Swell bien forme et conditions favorables',
+      ]);
+      return pick([
+        'Tres bonne fenetre — conditions favorables',
+        'Ca s\'annonce bien sur ce creneau',
+        'Les conditions sont la, bonne session en vue',
+      ]);
+    }
+    // Bon score MAIS un bemol — on le dit sans contredire le score
+    if (onshore || strongWind) return pick([
+      'Beau potentiel de vagues mais le vent va brouiller un peu',
+      'Bon swell en approche — le vent n\'est pas ideal mais ca reste surfable',
+    ]);
+    if (shortPeriod) return pick([
+      'Bonne taille mais houle courte — vagues un peu desorganisees',
+      'Les vagues sont la mais le swell manque de puissance',
+    ]);
+    return pick([
+      'Bon creneau avec un petit bemol — ca vaut le deplacement',
+      'Conditions solides malgre un detail perfectible',
+    ]);
   }
 
-  // Messages nets selon le score — sans caveat
-  if (score >= 8.5) return 'Conditions exceptionnelles — fonce !';
-  if (score >= 7) return 'Très bonne session en vue';
-  if (score >= 5.5 && !hasCriticalCaveat) return 'Session sympa en perspective';
-
-  // Score moyen avec contexte
-  if (score >= 5.5 && hasCriticalCaveat) {
-    if (hasBigWaves) return 'Ça brasse — sortie à évaluer selon ton niveau';
-    if (hasSmallWaves) return 'Petit mais surfable — idéal longboard ou foil';
-    if (hasStrongWind) return 'Le vent complique les choses';
-    return 'Session possible mais pas idéale';
+  // ── SCORE 5.5-7 : correct, surfable ──
+  if (score >= 5.5) {
+    if (smallWaves) return pick([
+      'Petit mais propre — ideal pour un longboard ou du cruising',
+      'Vagues modestes mais les conditions sont clean',
+    ]);
+    if (onshore) return pick([
+      'Il y a de la vague mais le vent complique la lecture',
+      'Surfable mais faut accepter le clapot',
+    ]);
+    if (lightWind && !smallWaves) return pick([
+      'Peu de vent et de la vague — session honorable',
+      'Ca se tente — pas la session du siecle mais correcte',
+    ]);
+    return pick([
+      'Creneau surfable — sans plus mais ca peut le faire',
+      'Conditions moyennes-bonnes, a toi de voir',
+      'Pas parfait mais y a de quoi se faire plaisir',
+    ]);
   }
 
+  // ── SCORE 4-5.5 : moyen, on previent ──
   if (score >= 4) {
-    if (hasSmallWaves) return 'Vraiment petit — session galère en vue';
-    if (hasStrongWind) return 'Trop de vent — conditions hachées';
-    if (hasBigWaves) return 'Trop gros pour être fun';
-    return 'Conditions moyennes — faisable mais sans plus';
+    if (smallWaves && onshore) return pick([
+      'Petit et venteux — ca va etre complique',
+      'Pas grand chose a se mettre sous la dent et du vent en plus',
+    ]);
+    if (smallWaves) return pick([
+      'Vraiment petit — prends le longboard ou garde la journee pour autre chose',
+      'Quasi flat — la motivation devra compenser le manque de vagues',
+    ]);
+    if (bigWaves) return pick([
+      'Gros et agite — reserve aux plus experimentes',
+      'Ca envoie mais les conditions sont brouillonnes',
+    ]);
+    if (strongWind) return pick([
+      'Le vent domine — mer hachee et vagues fermees',
+      'Conditions ventees — complique de trouver du plaisir',
+    ]);
+    return pick([
+      'Conditions moyennes — si t\'as vraiment envie d\'aller a l\'eau',
+      'Sortie possible mais faut pas s\'attendre a des miracles',
+    ]);
   }
 
-  // Score < 4 : honnêtement mauvais
+  // ── SCORE 2.5-4 : faible ──
   if (score >= 2.5) {
-    if (hasSmallWaves && hasStrongWind) return 'Flat et venté — journée off';
-    if (hasSmallWaves) return 'Pas de vagues — journée repos';
-    if (hasStrongWind) return 'Tempête — reste au chaud';
-    return 'Conditions médiocres — pas la peine d\'y aller';
+    if (smallWaves && strongWind) return pick([
+      'Flat et venteux — journee off',
+      'Rien a surfer et du vent — seche cette session',
+    ]);
+    if (smallWaves) return pick([
+      'L\'ocean est au repos — journee repos aussi',
+      'Pas de vagues — profites-en pour autre chose',
+    ]);
+    if (strongWind) return pick([
+      'Tempete — dangereux et pas fun',
+      'Vent trop fort — conditions impraticables',
+    ]);
+    return pick([
+      'Conditions faibles — ca ne vaut pas le deplacement',
+      'Pas la peine d\'y aller — economise ton energie',
+    ]);
   }
-  return 'Conditions très mauvaises — oublie la session';
+
+  // ── SCORE < 2.5 : rien ──
+  return pick([
+    'Ocean plat ou impraticable — journee off',
+    'Rien a faire dans l\'eau aujourd\'hui',
+  ]);
 }
 
 // Grouper les points horaires en fenêtres continues
