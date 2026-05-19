@@ -101,9 +101,11 @@ class StormglassService {
 
       console.log(`🌊 Appel Stormglass API: ${lat}, ${lng} (${days} jours)`);
 
-      // Calcul des timestamps
-      const startTime = Math.floor(Date.now() / 1000);
-      const endTime = Math.floor((Date.now() + (days * 24 * 60 * 60 * 1000)) / 1000);
+      // Calcul des timestamps — commencer au debut du jour pour inclure les creneaux d'aujourd'hui
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
+      const startTime = Math.floor(todayMidnight.getTime() / 1000);
+      const endTime = Math.floor((todayMidnight.getTime() + (days * 24 * 60 * 60 * 1000)) / 1000);
 
       const params = {
         lat: parseFloat(lat),

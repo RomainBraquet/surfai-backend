@@ -206,10 +206,13 @@ function getBestWindows(context, maxWindows = 10) {
     return { ...result, time: point.time, conditions: point };
   });
 
-  // Filtrer les créneaux non surfables (score < 4) et nocturnes (avant 6h, après 21h)
+  // Filtrer : score < 4, nocturnes (avant 6h, apres 21h), ET creneaux deja passes
+  const nowMs = Date.now();
   const surfable = scored.filter(s => {
     if (s.score < 4) return false;
-    const hour = new Date(s.time).getHours();
+    const t = new Date(s.time);
+    if (t.getTime() < nowMs - 3600000) return false; // passe de plus d'1h = exclu
+    const hour = t.getHours();
     return hour >= 6 && hour <= 21;
   });
 
