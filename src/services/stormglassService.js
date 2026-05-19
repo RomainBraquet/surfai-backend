@@ -84,7 +84,8 @@ class StormglassService {
   async getForecast(lat, lng, days = 3) {
     try {
       // Vérifier le cache mémoire (rapide)
-      const cacheKey = `${lat.toFixed(4)}-${lng.toFixed(4)}-${days}`;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const cacheKey = `${lat.toFixed(4)}-${lng.toFixed(4)}-${days}-${todayStr}`;
       const cached = this.cache.get(cacheKey);
       if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION_MS) {
         const ageMin = Math.round((Date.now() - cached.timestamp) / 60000);
