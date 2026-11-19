@@ -205,6 +205,10 @@ router.post('/sessions/quick', async (req, res) => {
     const db = require('../services/supabaseService');
     const stormglassService = require('../services/stormglassService');
     const { userId, spotId, date, time, rating, notes, boardId } = req.body;
+    // Ressenti sur la taille des vagues : 'too_small' | 'perfect' | 'too_big' (facultatif)
+    const sizeFeel = ['too_small', 'perfect', 'too_big'].includes(req.body.sizeFeel) ? req.body.sizeFeel : null;
+    // Ressenti sur le vent : 'clean' | 'annoying' | 'too_much' (facultatif)
+    const windFeel = ['clean', 'annoying', 'too_much'].includes(req.body.windFeel) ? req.body.windFeel : null;
 
     let meteo = null;
 
@@ -213,22 +217,53 @@ router.post('/sessions/quick', async (req, res) => {
       try {
         const spot = await db.getSpotById(spotId);
         if (spot) {
-          const weatherData = await stormglassService.getForecast(spot.lat, spot.lng, 1);
-          // Trouver le point météo le plus proche de l'heure de session
-          const sessionTime = time ? new Date(`${date?.split('T')[0]}T${time}`) : new Date(date);
-          const sessionTimestamp = sessionTime.getTime() / 1000;
-          const closest = weatherData.forecast?.reduce((best, p) =>
-            Math.abs(p.timestamp - sessionTimestamp) < Math.abs((best?.timestamp || 0) - sessionTimestamp) ? p : best
-          , null);
+          // Heure de la session : l'heure saisie est l'heure locale du spot
+          const { spotTimeZone, localParts } = require('../services/timeUtils');
+          const day = (date || new Date().toISOString()).split('T')[0];
+          let sessionMs;
+          if (time) {
+            // On cherche l'instant UTC dont l'heure locale au spot correspond à l'heure saisie
+            const tz = spotTimeZone(spot.lat, spot.lng);
+            const wanted = parseInt(String(time).split(':')[0], 10);
+            const minutes = parseInt(String(time).split(':')[1] || '0', 10);
+            sessionMs = new Date(`${day}T${String(wanted).padStart(2, '0')}:00:00Z`).getTime();
+            for (let shift = -14; shift <= 14; shift++) {
+              const candidate = sessionMs + shift * 3600000;
+              const local = localParts(candidate, tz);
+              if (local.date === day && local.hour === wanted) { sessionMs = candidate; break; }
+            }
+            sessionMs += minutes * 60000;
+          } else {
+            sessionMs = date ? new Date(date).getTime() : Date.now();
+          }
+
+          // Météo du jour et de l'heure réellement surfés (et non celle du jour de saisie)
+          const closest = sessionMs <= Date.now() + 5 * 86400000
+            ? await stormglassService.getConditionsAt(spot.lat, spot.lng, sessionMs)
+            : null;
 
           if (closest) {
             meteo = {
               waveHeight: closest.waveHeight,
               wavePeriod: closest.wavePeriod,
-              windSpeed: closest.windSpeed,
+              waveDirection: closest.waveDirection,
+              windSpeed: closest.windSpeed,      // km/h
               windDirection: closest.windDirection,
               swellHeight: closest.swellHeight,
+              swellDirection: closest.swellDirection,
+              capturedFor: new Date(sessionMs).toISOString(),
             };
+            // Marée au moment de la session : indispensable pour reconnaître plus tard des conditions proches
+            try {
+              const { tideAt } = require('../services/collector');
+              const extremes = await stormglassService.getTideExtremesAround(spot.lat, spot.lng, sessionMs);
+              if (extremes.length) {
+                const tide = tideAt(Math.floor(sessionMs / 1000), extremes);
+                if (tide.tideLevel != null) { meteo.tideLevel = tide.tideLevel; meteo.tidePhase = tide.tidePhase; }
+              }
+            } catch (tideError) {
+              console.warn('⚠️ Marée de la session non capturée:', tideError.message);
+            }
             console.log(`📡 Météo capturée pour session: ${JSON.stringify(meteo)}`);
           }
         }
@@ -236,6 +271,10 @@ router.post('/sessions/quick', async (req, res) => {
         console.warn('⚠️ Capture météo échouée (session sauvegardée sans météo):', meteoError.message);
       }
     }
+
+    // Le ressenti est rangé avec la météo de la session : c'est lui qui apprend la fourchette
+    if (sizeFeel) meteo = { ...(meteo || {}), sizeFeel };
+    if (windFeel) meteo = { ...(meteo || {}), windFeel };
 
     const session = await db.createSession({
       user_id: userId,
@@ -411,34 +450,90 @@ router.get('/spots/conditions', async (req, res) => {
 
 // ─── ROUTES PRÉDICTIONS ──────────────────────────────────
 
-// GET /api/v1/predictions/best-windows?userId=X&days=5
-// Meilleurs créneaux sur les spots les plus surfés par l'utilisateur
+// GET /api/v1/predictions/best-windows?userId=X&days=5[&lat=..&lng=..&radius=30]
+// Accueil : les spots du surfeur (favoris + déjà surfés), puis 2 ou 3 spots à découvrir
+// à proximité quand leurs conditions sont meilleures. Rien au-delà du rayon (30 km par défaut).
+const DISCOVERY_RADIUS_KM = 30;
+const DISCOVERY_MAX = 3;
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 router.get('/predictions/best-windows', async (req, res) => {
   try {
     const db = require('../services/supabaseService');
-    const { collectContext } = require('../services/collector');
+    const { collectUserData, buildContext } = require('../services/collector');
     const { getBestWindows } = require('../services/recommender');
 
     const userId = req.query.userId;
     const days = parseInt(req.query.days) || 5;
     if (!userId) return res.status(400).json({ success: false, error: 'userId requis' });
 
-    const favoriteSpots = await db.getFavoriteSpots(userId);
-    if (!favoriteSpots.length) {
-      return res.json({ success: true, message: 'Aucun spot favori trouvé', results: [] });
+    const userLat = parseFloat(req.query.lat), userLng = parseFloat(req.query.lng);
+    const hasPosition = Number.isFinite(userLat) && Number.isFinite(userLng);
+    const radius = Math.min(100, Math.max(5, parseFloat(req.query.radius) || DISCOVERY_RADIUS_KM));
+    const distanceFromUser = spot => hasPosition && spot.lat != null
+      ? Math.round(haversineKm(userLat, userLng, Number(spot.lat), Number(spot.lng)) * 10) / 10 : null;
+
+    const [allKnown, userData] = await Promise.all([db.getFavoriteSpots(userId), collectUserData(userId)]);
+
+    // 1. Spots connus du surfeur — s'il est localisé, seulement ceux à portée
+    const knownSpots = hasPosition ? allKnown.filter(s => distanceFromUser(s) <= radius) : allKnown;
+    const analyze = (spot, maxWindows) => buildContext(spot, userData, days)
+      .then(ctx => ({ ...getBestWindows(ctx, maxWindows), distanceKm: distanceFromUser(spot) }))
+      .catch(err => ({ spot: { id: spot.id, name: spot.name, lat: spot.lat, lng: spot.lng }, error: err.message, windows: [] }));
+    const knownResults = await Promise.all(knownSpots.map(spot => analyze(spot, 6)));
+
+    // 2. Spots à découvrir : jamais surfés, pas en favori, à moins de `radius` km
+    //    du surfeur (ou, sans position, de l'un de ses spots connus)
+    // Seulement quand l'app transmet la position (ou le demande) : les écrans qui ne savent pas
+    // encore présenter un « spot à découvrir » ne reçoivent que les spots connus.
+    const wantDiscovery = hasPosition || req.query.discover === '1';
+    let discoveryResults = [];
+    const anchors = !wantDiscovery ? [] : hasPosition ? [{ lat: userLat, lng: userLng }] : allKnown.map(s => ({ lat: Number(s.lat), lng: Number(s.lng) }));
+    if (anchors.length) {
+      const knownIds = new Set([...allKnown.map(s => s.id), ...userData.pastSessions.map(s => s.spot_id)]);
+      const pad = radius / 111;
+      const box = {
+        latMin: Math.min(...anchors.map(a => a.lat)) - pad, latMax: Math.max(...anchors.map(a => a.lat)) + pad,
+        lngMin: Math.min(...anchors.map(a => a.lng)) - pad * 1.6, lngMax: Math.max(...anchors.map(a => a.lng)) + pad * 1.6,
+      };
+      const { data: nearby } = await db.supabase
+        .from('spots')
+        .select('id, name, city, lat, lng, ideal_wind, ideal_swell, ideal_tide, shom_port_code')
+        .gte('lat', box.latMin).lte('lat', box.latMax).gte('lng', box.lngMin).lte('lng', box.lngMax)
+        .limit(300);
+      const candidates = (nearby || [])
+        .filter(s => !knownIds.has(s.id))
+        .map(s => ({ ...s, _dist: Math.min(...anchors.map(a => haversineKm(a.lat, a.lng, Number(s.lat), Number(s.lng)))) }))
+        .filter(s => s._dist <= radius)
+        .sort((a, b) => a._dist - b._dist)
+        .slice(0, 40);
+      // Quota : chaque zone de prévision coûte 2 appels par jour
+      const stormglass = require('../services/stormglassService');
+      // Les zones déjà chargées pour les spots connus ne coûtent rien ; on y ajoute 2 zones nouvelles au plus
+      const knownCells = new Set(knownSpots.map(s => stormglass.cellKey(s.lat, s.lng)));
+      const newCells = [...new Set(candidates.map(s => stormglass.cellKey(s.lat, s.lng)))].filter(c => !knownCells.has(c)).slice(0, 2);
+      const cells = [...knownCells, ...newCells];
+      const reachable = candidates.filter(s => cells.includes(stormglass.cellKey(s.lat, s.lng)));
+
+      const bestKnown = Math.max(0, ...knownResults.map(r => r.windows[0]?.score || 0));
+      const scored = await Promise.all(reachable.map(spot => analyze(spot, 3)
+        .then(r => ({ ...r, discovery: true, distanceKm: Math.round(spot._dist * 10) / 10 }))));
+      discoveryResults = scored
+        .filter(r => r.windows.length && r.windows[0].score > bestKnown)   // seulement si c'est mieux que chez lui
+        .sort((a, b) => b.windows[0].score - a.windows[0].score)
+        .slice(0, DISCOVERY_MAX);
     }
 
-    // Analyser tous les spots favoris (Stormglass payant = pas de limite)
-    const spotsToAnalyze = favoriteSpots;
-    const results = await Promise.all(
-      spotsToAnalyze.map(spot =>
-        collectContext(spot.id, userId, days)
-          .then(ctx => getBestWindows(ctx, 6))
-          .catch(err => ({ spot: { id: spot.id, name: spot.name }, error: err.message, windows: [] }))
-      )
-    );
-
-    res.json({ success: true, userId, days, results });
+    if (!knownResults.length && !discoveryResults.length) {
+      return res.json({ success: true, message: 'Aucun spot à portée', results: [] });
+    }
+    res.json({ success: true, userId, days, radiusKm: radius, results: [...knownResults, ...discoveryResults] });
   } catch (error) {
     console.error('Erreur best-windows:', error.message);
     res.status(500).json({ success: false, error: error.message });

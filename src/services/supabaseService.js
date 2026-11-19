@@ -155,25 +155,44 @@ async function setTideCache(spotId, date, tideData) {
 // ─── FAVORITE SPOTS ──────────────────────────────────────
 
 async function getFavoriteSpots(userId) {
-  // Top 5 spots les plus surfés par cet utilisateur
+  const SPOT_FIELDS = 'id, name, city, lat, lng, ideal_wind, ideal_swell, ideal_tide, shom_port_code';
+
+  // 1. Les favoris choisis par l'utilisateur (un nouveau surfeur sans session a quand même des prévisions)
+  let explicit = [];
+  const { data: favRows, error: favError } = await supabase
+    .from('user_favorite_spots')
+    .select('spot_id')
+    .eq('user_id', userId);
+  if (favError) console.warn('⚠️ Favoris explicites indisponibles:', favError.message);
+  const favIds = (favRows || []).map(r => r.spot_id).filter(Boolean);
+  if (favIds.length) {
+    const { data: favSpots, error: spotsError } = await supabase.from('spots').select(SPOT_FIELDS).in('id', favIds);
+    if (spotsError) console.warn('⚠️ Spots favoris indisponibles:', spotsError.message);
+    explicit = favSpots || [];
+  }
+
+  // 2. Complétés par les spots les plus surfés
   const { data, error } = await supabase
     .from('sessions')
-    .select('spot_id, spots(id, name, city, lat, lng, ideal_wind, ideal_swell, ideal_tide, shom_port_code)')
+    .select(`spot_id, spots(${SPOT_FIELDS})`)
     .eq('user_id', userId)
     .not('spot_id', 'is', null);
   if (error) throw new Error(`Erreur favorite spots: ${error.message}`);
-  // Compter par spot_id
   const counts = {};
-  data.forEach(s => {
+  (data || []).forEach(s => {
     if (!s.spot_id) return;
     counts[s.spot_id] = counts[s.spot_id] || { count: 0, spot: s.spots };
     counts[s.spot_id].count++;
   });
-  return Object.values(counts)
+  const mostSurfed = Object.values(counts)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 5)
     .map(e => e.spot)
     .filter(Boolean);
+
+  const seen = new Set();
+  return [...explicit, ...mostSurfed]
+    .filter(spot => (seen.has(spot.id) ? false : seen.add(spot.id)))
+    .slice(0, 5);
 }
 
 async function updateSession(sessionId, userId, updates) {

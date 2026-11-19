@@ -1,16 +1,19 @@
 // 🏆 Recommender SurfAI — Sélectionne les meilleurs créneaux et génère les narratives
 // Spec : docs/superpowers/specs/2026-03-22-moteur-prediction-ia-design.md
 
-const { scoreSlot } = require('./scorer');
+const { scoreSlot, learnWaveRange, learnWindTolerance } = require('./scorer');
+const { spotTimeZone, localParts, sunTimes, isDaylightSlot } = require('./timeUtils');
 
 // Labels selon score
-function scoreLabel(score) {
+function scoreLabel(score, sizeIssue) {
+  if (score < 4 && sizeIssue === 'too_big') return 'Trop gros';
+  if (score < 4 && sizeIssue === 'too_small') return 'Trop petit';
   if (score >= 8.5) return 'Exceptionnel';
   if (score >= 7)   return 'Tres bon';
   if (score >= 5.5) return 'Correct';
   if (score >= 4)   return 'Moyen';
   if (score >= 2.5) return 'Faible';
-  return 'Plat';
+  return 'Mauvais';
 }
 
 // Pick un element au hasard dans un tableau (variete des textes)
@@ -35,6 +38,16 @@ function buildNarrative(scoredSlot, spot) {
   const shortPeriod = period > 0 && period < 7;
   const smallWaves = waveH < 0.6;
   const bigWaves = waveH > 2.5;
+
+  // ── Taille hors de la fourchette du surfeur : on le dit avant tout ──
+  if (score < 5.5 && scoredSlot.sizeIssue === 'too_big') return pick([
+    'Trop gros pour ta fourchette — a regarder depuis la plage',
+    'Ca depasse ta taille de confort — prudence',
+  ]);
+  if (score < 5.5 && scoredSlot.sizeIssue === 'too_small') return pick([
+    'Trop petit pour toi — pas grand chose a surfer',
+    'En dessous de ta taille mini — journee calme',
+  ]);
 
   // ── SCORE >= 8.5 : exceptionnel, tout est aligne ──
   if (score >= 8.5) {
@@ -157,14 +170,14 @@ function buildNarrative(scoredSlot, spot) {
 function buildTimeWindow(slots) {
   if (!slots.length) return { timeWindow: null, peakHour: null };
   const best = slots.reduce((a, b) => a.score > b.score ? a : b);
-  const peakHour = new Date(best.time).getHours();
+  const peakHour = best.localHour;
 
   // Fenêtre de 3h max centrée sur le peak
   // Prendre les heures adjacentes au peak avec score >= (peak - 1.5), limitées à 3h
   const threshold = best.score - 1.5;
   const windowHours = slots
     .filter(s => s.score >= threshold)
-    .map(s => new Date(s.time).getHours())
+    .map(s => s.localHour)
     .filter(h => Math.abs(h - peakHour) <= 1) // max 1h avant et 1h après le peak = 3h
     .sort((a, b) => a - b);
 
@@ -200,29 +213,41 @@ function computeTideCoeff(tideExtremes, date) {
 function getBestWindows(context, maxWindows = 10) {
   const { spot, forecast, profile, pastSessions, boards } = context;
 
+  // Heure locale du spot (le serveur est en UTC) et lumière du jour
+  const timeZone = spotTimeZone(spot.lat, spot.lng);
+  const sunByDate = {};
+  const sunFor = date => (sunByDate[date] = sunByDate[date] || sunTimes(date, Number(spot.lat), Number(spot.lng)));
+
+  // Fourchette de vagues du surfeur : apprise de ses sessions, sinon celle du profil
+  const waveRange = learnWaveRange(pastSessions, profile);
+  // Tolérance au vent : selon le niveau, puis apprise du ressenti donné à chaque session
+  const windTolerance = learnWindTolerance(pastSessions, profile);
+
   // Scorer chaque créneau horaire
   const scored = forecast.map(point => {
-    const result = scoreSlot(point, { profile, spot, pastSessions, boards });
-    return { ...result, time: point.time, conditions: point };
+    const result = scoreSlot({ ...point, spotId: spot.id }, { profile, spot, pastSessions, boards, waveRange, windTolerance });
+    const local = localParts(point.time, timeZone);
+    const timeMs = new Date(point.time).getTime();
+    return {
+      ...result, time: point.time, conditions: point,
+      localDate: local.date, localHour: local.hour,
+      daylight: isDaylightSlot(timeMs, sunFor(local.date)),
+    };
   });
 
-  // Filtrer : score < 4, nocturnes (avant 6h, apres 21h), ET creneaux deja passes
+  // Filtrer : score < 4, créneaux de nuit, ET créneaux déjà passés
   const nowMs = Date.now();
   const surfable = scored.filter(s => {
     if (s.score < 4) return false;
-    const t = new Date(s.time);
-    if (t.getTime() < nowMs - 3600000) return false; // passe de plus d'1h = exclu
-    const hour = t.getHours();
-    return hour >= 6 && hour <= 21;
+    if (new Date(s.time).getTime() < nowMs - 3600000) return false; // passé de plus d'1h = exclu
+    return s.daylight;
   });
 
-  // Grouper par demi-journée (matin: 6-12, après-midi: 12-21)
+  // Grouper par demi-journée locale (matin avant 13h, après-midi ensuite)
   const groups = {};
   surfable.forEach(s => {
-    const date = s.time.split('T')[0];
-    const hour = new Date(s.time).getHours();
-    const period = hour < 12 ? 'morning' : 'afternoon';
-    const key = `${date}_${period}`;
+    const period = s.localHour < 13 ? 'morning' : 'afternoon';
+    const key = `${s.localDate}_${period}`;
     if (!groups[key]) groups[key] = [];
     groups[key].push(s);
   });
@@ -232,14 +257,14 @@ function getBestWindows(context, maxWindows = 10) {
     .map(slots => {
       const best = slots.reduce((a, b) => a.score > b.score ? a : b);
       const { timeWindow, peakHour } = buildTimeWindow(slots);
-      const date = best.time.split('T')[0];
+      const date = best.localDate;
       const tideCoeff = computeTideCoeff(best.conditions.tideExtremes, date);
       return {
         date,
         timeWindow,
         peakHour: `${peakHour}h`,
         score: best.score,
-        scoreLabel: scoreLabel(best.score),
+        scoreLabel: scoreLabel(best.score, best.sizeIssue),
         tideCoeff,
         conditions: {
           waveHeight: best.conditions.waveHeight,
@@ -247,6 +272,7 @@ function getBestWindows(context, maxWindows = 10) {
           windDirection: best.conditions.windDirection,
           wavePeriod: best.conditions.wavePeriod,
           tidePhase: best.conditions.tidePhase,
+          tideLevel: best.conditions.tideLevel,
           swellHeight: best.conditions.swellHeight,
           waterTemp: best.conditions.waterTemp,
           airTemp: best.conditions.airTemp,
@@ -262,17 +288,15 @@ function getBestWindows(context, maxWindows = 10) {
     .sort((a, b) => b.score - a.score)
     .slice(0, maxWindows);
 
-  // Scores heure par heure (6h-21h) pour l'affichage détaillé
+  // Scores heure par heure (heures de jour, heure locale du spot) pour l'affichage détaillé
   const hourlyScores = scored
-    .filter(s => {
-      const h = new Date(s.time).getHours();
-      return h >= 6 && h <= 21;
-    })
+    .filter(s => s.daylight)
     .map(s => ({
       time: s.time,
-      hour: new Date(s.time).getHours(),
-      date: s.time.split('T')[0],
+      hour: s.localHour,
+      date: s.localDate,
       score: s.score,
+      scoreLabel: scoreLabel(s.score, s.sizeIssue),
       conditions: {
         waveHeight: s.conditions.waveHeight,
         windSpeed: s.conditions.windSpeed,
@@ -286,10 +310,13 @@ function getBestWindows(context, maxWindows = 10) {
 
   return {
     spot: { id: spot.id, name: spot.name, city: spot.city, lat: spot.lat, lng: spot.lng },
+    timeZone,
     generatedAt: new Date().toISOString(),
     windows,
     hourlyScores,
-    calibrationLevel: scored[0]?.calibrationLevel || 0.10,
+    waveRange,
+    windTolerance,
+    calibrationLevel: waveRange.confidence,
     totalSessionsAnalyzed: pastSessions.filter(s => s.meteo).length,
   };
 }
