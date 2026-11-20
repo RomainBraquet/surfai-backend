@@ -431,7 +431,7 @@ function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotSco
   if (reminder?.tone === 'good') reasons.push(reminder.text);
   else if (reminder?.tone === 'bad') caveats.push(reminder.text);
 
-  return { whyGood: reasons, whyNotPerfect: caveats };
+  return { whyGood: reasons, whyNotPerfect: caveats, reminder: reminder || null };
 }
 
 // ─── Bonus Communautaire ─────────────────────────────────
@@ -633,6 +633,7 @@ function scoreSlot(slot, context) {
       community: community,
       memory: { adjustment: memory.adjustment, sessionsHere: memory.sessionsHere, similarCount: memory.similarCount },
     },
+    reminder: why.reminder,
     whyGood: community.active && community.bonus > 0
       ? [...why.whyGood, `👥 Confirmé par ${community.sessionCount} sessions terrain (confiance ${Math.round(community.confidence * 100)}%)`]
       : why.whyGood,
