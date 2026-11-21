@@ -354,7 +354,7 @@ function suggestBoard(slot, pastSessions, boards) {
       board: matchingBoards[0],
       confidence: 0.7,
       method: 'sweet_spot',
-      reason: `Dans son sweet spot (${waveH.toFixed(1)}m)`,
+      reason: `Dans son sweet spot (${waveH.toFixed(1).replace('.', ',')} m)`,
       basedOnSessions: 0,
     };
   }
@@ -378,52 +378,52 @@ function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotSco
   // --- Vent ---
   const speedKmh = slot.windSpeed || 0;
   if (windScore >= 9) {
-    if (speedKmh <= 8) reasons.push('Conditions glassy — quasi pas de vent');
-    else reasons.push('Vent léger de terre (' + Math.round(speedKmh) + ' km/h) — vagues propres');
+    if (speedKmh <= 8) reasons.push('Conditions glassy, quasi pas de vent');
+    else reasons.push('Vent léger de terre (' + Math.round(speedKmh) + ' km/h), vagues propres');
   } else if (windScore >= 7) {
     // Vérifier si c'est grâce à l'offshore
     if (slot.windDirection != null && slot.waveDirection != null) {
       const diff = Math.abs(slot.windDirection - slot.waveDirection);
       const norm = diff > 180 ? 360 - diff : diff;
-      if (norm > 120) reasons.push('Vent offshore — vagues propres et creuses');
+      if (norm > 120) reasons.push('Vent offshore, vagues propres et creuses');
       else reasons.push('Vent modéré et bien orienté');
     } else {
       reasons.push('Vent faible (' + Math.round(speedKmh) + ' km/h)');
     }
   } else if (windScore < 4) {
-    if (speedKmh > 30) caveats.push('Vent fort (' + Math.round(speedKmh) + ' km/h) — conditions difficiles');
-    else caveats.push('Vent onshore — vagues hachées');
+    if (speedKmh > 30) caveats.push('Vent fort (' + Math.round(speedKmh) + ' km/h), conditions difficiles');
+    else caveats.push('Vent onshore, vagues hachées');
   }
 
   // --- Vagues ---
   const waveH = Math.max(slot.waveHeight || 0, slot.swellHeight || 0);
   if (wavesScore >= 8) {
-    reasons.push('Vagues parfaites pour toi (' + waveH.toFixed(1) + 'm)');
+    reasons.push('Vagues parfaites pour toi (' + waveH.toFixed(1).replace('.', ',') + ' m)');
   } else if (wavesScore >= 6) {
-    reasons.push('Taille de vagues dans ta zone (' + waveH.toFixed(1) + 'm)');
+    reasons.push('Taille de vagues dans ta zone (' + waveH.toFixed(1).replace('.', ',') + ' m)');
   } else if (wavesScore < 4) {
     if (waveH < (profile.min_wave_height || 0.8)) {
-      caveats.push('Vagues petites (' + waveH.toFixed(1) + 'm) — en dessous de tes préférences');
+      caveats.push('Vagues petites (' + waveH.toFixed(1).replace('.', ',') + ' m), en dessous de tes préférences');
     } else {
-      caveats.push('Vagues grosses (' + waveH.toFixed(1) + 'm) — au-dessus de tes préférences');
+      caveats.push('Vagues grosses (' + waveH.toFixed(1).replace('.', ',') + ' m), au-dessus de tes préférences');
     }
   }
 
   // --- Période ---
   const period = slot.wavePeriod || 0;
   if (period >= 12) {
-    reasons.push('Période longue (' + Math.round(period) + 's) — vagues puissantes et espacées');
+    reasons.push('Période longue (' + Math.round(period) + ' s), vagues puissantes et espacées');
   } else if (period > 0 && period < 7) {
-    caveats.push('Période courte (' + Math.round(period) + 's) — vagues désorganisées');
+    caveats.push('Période courte (' + Math.round(period) + ' s), vagues désorganisées');
   }
 
   // --- Marée ---
   const tideCat = tideCategory(slot);
   const tideLabel = { low: 'Marée basse', high: 'Marée haute', mid: 'Mi-marée' }[tideCat];
   if (tideLabel && tideAdj >= 1.0) {
-    reasons.push(tideLabel + ' — idéale pour ce spot');
+    reasons.push(tideLabel + ', idéale pour ce spot');
   } else if (tideLabel && tideAdj <= -1.0) {
-    caveats.push(tideLabel + ' — pas idéale pour ce spot');
+    caveats.push(tideLabel + ', pas idéale pour ce spot');
   }
 
   // --- Mémoire du spot : on rappelle un vécu, pas une date ---

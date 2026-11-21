@@ -9,7 +9,7 @@ function scoreLabel(score, sizeIssue) {
   if (score < 4 && sizeIssue === 'too_big') return 'Trop gros';
   if (score < 4 && sizeIssue === 'too_small') return 'Trop petit';
   if (score >= 8.5) return 'Exceptionnel';
-  if (score >= 7)   return 'Tres bon';
+  if (score >= 7)   return 'Très bon';
   if (score >= 5.5) return 'Correct';
   if (score >= 4)   return 'Moyen';
   if (score >= 2.5) return 'Faible';
@@ -41,28 +41,28 @@ function buildNarrative(scoredSlot, spot) {
 
   // ── Taille hors de la fourchette du surfeur : on le dit avant tout ──
   if (score < 5.5 && scoredSlot.sizeIssue === 'too_big') return pick([
-    'Trop gros pour ta fourchette — a regarder depuis la plage',
-    'Ca depasse ta taille de confort — prudence',
+    'Trop gros pour ta fourchette, à regarder depuis la plage',
+    'Ça dépasse ta taille de confort, prudence',
   ]);
   if (score < 5.5 && scoredSlot.sizeIssue === 'too_small') return pick([
-    'Trop petit pour toi — pas grand chose a surfer',
-    'En dessous de ta taille mini — journee calme',
+    'Trop petit pour toi, pas grand chose à surfer',
+    'En dessous de ta taille mini, journée calme',
   ]);
 
   // ── SCORE >= 8.5 : exceptionnel, tout est aligne ──
   if (score >= 8.5) {
     if (offshore && longPeriod) return pick([
-      'Houle longue, vent offshore — les planetes sont alignees',
+      'Houle longue, vent offshore, les planètes sont alignées',
       'Combo parfait : beau swell et vent de terre',
-      'Les conditions revees — a ne pas rater'
+      'Les conditions rêvées, à ne pas rater'
     ]);
     if (offshore) return pick([
-      'Vent offshore et belles vagues — session premium',
-      'Vagues propres et bien formees — ca va etre beau',
+      'Vent offshore et belles vagues, session premium',
+      'Vagues propres et bien formées, ça va être beau',
     ]);
     return pick([
-      'Toutes les conditions sont reunies — fonce',
-      'Creneau en or — conditions au top',
+      'Toutes les conditions sont réunies, fonce',
+      'Créneau en or, conditions au top',
     ]);
   }
 
@@ -71,33 +71,33 @@ function buildNarrative(scoredSlot, spot) {
     if (caveats.length === 0) {
       if (longPeriod) return pick([
         'Belle houle longue, conditions propres',
-        'Swell bien forme et conditions favorables',
+        'Swell bien formé et conditions favorables',
       ]);
       return pick([
-        'Tres bonne fenetre — conditions favorables',
-        'Ca s\'annonce bien sur ce creneau',
-        'Les conditions sont la, bonne session en vue',
+        'Très bonne fenêtre, conditions favorables',
+        'Ça s\'annonce bien sur ce créneau',
+        'Les conditions sont là, bonne session en vue',
       ]);
     }
     // Bon score MAIS un bemol — on le dit sans contredire le score
     if (onshore || strongWind) return pick([
       'Beau potentiel de vagues mais le vent va brouiller un peu',
-      'Bon swell en approche — le vent n\'est pas ideal mais ca reste surfable',
+      'Bon swell en approche, le vent n\'est pas idéal mais ça reste surfable',
     ]);
     if (shortPeriod) return pick([
-      'Bonne taille mais houle courte — vagues un peu desorganisees',
-      'Les vagues sont la mais le swell manque de puissance',
+      'Bonne taille mais houle courte, vagues un peu désorganisées',
+      'Les vagues sont là mais le swell manque de puissance',
     ]);
     return pick([
-      'Bon creneau avec un petit bemol — ca vaut le deplacement',
-      'Conditions solides malgre un detail perfectible',
+      'Bon créneau avec un petit bémol, ça vaut le déplacement',
+      'Conditions solides malgré un détail perfectible',
     ]);
   }
 
   // ── SCORE 5.5-7 : correct, surfable ──
   if (score >= 5.5) {
     if (smallWaves) return pick([
-      'Petit mais propre — ideal pour un longboard ou du cruising',
+      'Petit mais propre, idéal pour un longboard ou du cruising',
       'Vagues modestes mais les conditions sont clean',
     ]);
     if (onshore) return pick([
@@ -105,12 +105,12 @@ function buildNarrative(scoredSlot, spot) {
       'Surfable mais faut accepter le clapot',
     ]);
     if (lightWind && !smallWaves) return pick([
-      'Peu de vent et de la vague — session honorable',
-      'Ca se tente — pas la session du siecle mais correcte',
+      'Peu de vent et de la vague, session honorable',
+      'Ça se tente, pas la session du siècle mais correcte',
     ]);
     return pick([
-      'Creneau surfable — sans plus mais ca peut le faire',
-      'Conditions moyennes-bonnes, a toi de voir',
+      'Créneau surfable, sans plus mais ça peut le faire',
+      'Conditions moyennes-bonnes, à toi de voir',
       'Pas parfait mais y a de quoi se faire plaisir',
     ]);
   }
@@ -118,51 +118,51 @@ function buildNarrative(scoredSlot, spot) {
   // ── SCORE 4-5.5 : moyen, on previent ──
   if (score >= 4) {
     if (smallWaves && onshore) return pick([
-      'Petit et venteux — ca va etre complique',
-      'Pas grand chose a se mettre sous la dent et du vent en plus',
+      'Petit et venteux, ça va être compliqué',
+      'Pas grand chose à se mettre sous la dent et du vent en plus',
     ]);
     if (smallWaves) return pick([
-      'Vraiment petit — prends le longboard ou garde la journee pour autre chose',
-      'Quasi flat — la motivation devra compenser le manque de vagues',
+      'Vraiment petit, prends le longboard ou garde la journée pour autre chose',
+      'Quasi flat, la motivation devra compenser le manque de vagues',
     ]);
     if (bigWaves) return pick([
-      'Gros et agite — reserve aux plus experimentes',
-      'Ca envoie mais les conditions sont brouillonnes',
+      'Gros et agité, réservé aux plus expérimentés',
+      'Ça envoie mais les conditions sont brouillonnes',
     ]);
     if (strongWind) return pick([
-      'Le vent domine — mer hachee et vagues fermees',
-      'Conditions ventees — complique de trouver du plaisir',
+      'Le vent domine, mer hachée et vagues fermées',
+      'Conditions ventées, compliqué de trouver du plaisir',
     ]);
     return pick([
-      'Conditions moyennes — si t\'as vraiment envie d\'aller a l\'eau',
-      'Sortie possible mais faut pas s\'attendre a des miracles',
+      'Conditions moyennes, si t\'as vraiment envie d\'aller à l\'eau',
+      'Sortie possible mais faut pas s\'attendre à des miracles',
     ]);
   }
 
   // ── SCORE 2.5-4 : faible ──
   if (score >= 2.5) {
     if (smallWaves && strongWind) return pick([
-      'Flat et venteux — journee off',
-      'Rien a surfer et du vent — seche cette session',
+      'Flat et venteux, journée off',
+      'Rien à surfer et du vent, sèche cette session',
     ]);
     if (smallWaves) return pick([
-      'L\'ocean est au repos — journee repos aussi',
-      'Pas de vagues — profites-en pour autre chose',
+      'L\'océan est au repos, journée repos aussi',
+      'Pas de vagues, profites-en pour autre chose',
     ]);
     if (strongWind) return pick([
-      'Tempete — dangereux et pas fun',
-      'Vent trop fort — conditions impraticables',
+      'Tempête, dangereux et pas fun',
+      'Vent trop fort, conditions impraticables',
     ]);
     return pick([
-      'Conditions faibles — ca ne vaut pas le deplacement',
-      'Pas la peine d\'y aller — economise ton energie',
+      'Conditions faibles, ça ne vaut pas le déplacement',
+      'Pas la peine d\'y aller, économise ton énergie',
     ]);
   }
 
   // ── SCORE < 2.5 : rien ──
   return pick([
-    'Ocean plat ou impraticable — journee off',
-    'Rien a faire dans l\'eau aujourd\'hui',
+    'Océan plat ou impraticable, journée off',
+    'Rien à faire dans l\'eau aujourd\'hui',
   ]);
 }
 
