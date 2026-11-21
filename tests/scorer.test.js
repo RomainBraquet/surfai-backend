@@ -171,4 +171,20 @@ ok(Math.abs(wavePower(1.4, 11) - 10.6) < 0.3, `1,4 m à 11 s ≈ 10,6 kW/m, obte
 ok(wavePower(2, 14) > wavePower(2, 7) * 1.9, 'à taille égale, une houle deux fois plus longue est deux fois plus puissante');
 ok(wavePower(null, 11) === null, 'sans hauteur, pas de puissance');
 
+// 11. La puissance dans la note : trop molle on rame, trop forte ça dépasse le niveau, et le 10 reste rare
+const { judgePower, powerBand } = require('../src/services/scorer');
+const weak = { ...perfect, waveHeight: 0.9, swellHeight: 0.9, wavePeriod: 7, peakPeriod: 7 };   // 2,8 kW/m : dans la fourchette de taille, mais molle
+ok(scoreSlot(weak, ctx).powerState === 'weak', 'petite houle courte = houle molle');
+ok(score(weak) <= 6.4, `houle molle : jamais une grande note, obtenu ${score(weak)}`);
+ok(scoreSlot(weak, ctx).whyNotPerfect.some(t => /ramer/.test(t)), 'on prévient qu\'on risque de ramer sans partir');
+const fair = { ...perfect, waveHeight: 1.2, swellHeight: 1.2, wavePeriod: 11, peakPeriod: 11 };   // 7,8 kW/m : correcte
+ok(score(fair) <= 8.4, `houle correcte : bonne session, pas exceptionnelle, obtenu ${score(fair)}`);
+const heavy = { ...perfect, waveHeight: 1.9, swellHeight: 1.9, wavePeriod: 17, peakPeriod: 17 };  // 30 kW/m : dans la taille, trop puissante
+ok(scoreSlot(heavy, ctx).powerState === 'strong' && score(heavy) <= 7.4, `1,9 m à 17 s : trop puissant pour un niveau intermédiaire, obtenu ${score(heavy)}`);
+ok(score(perfect) < 9.5, `même de très bonnes conditions n'atteignent pas 10 sans une houle longue, obtenu ${score(perfect)}`);
+const epic = { ...perfect, waveHeight: 1.5, swellHeight: 1.5, wavePeriod: 15, peakPeriod: 15, tideLevel: 0.1 };
+ok(score(epic) > score(perfect), 'une houle longue bien rangée reste au-dessus');
+const beg = powerBand({ surf_level: 'beginner', max_wave_height: 1.0 });
+ok(beg.floor < beg.good && beg.good < beg.max, 'un débutant garde une plage de puissance utilisable');
+
 console.log(`✅ ${n} vérifications du moteur passent`);

@@ -370,6 +370,36 @@ function degreesToCardinal(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
+// ─── Puissance de la houle ────────────────────────────────
+// En kW par mètre de front d'onde : P ≈ ½ × H² × T (2 m à 4 s ≈ 8 kW/m, 3 m à 6 s ≈ 27 kW/m).
+// C'est ce que le surfeur ressent. Sans puissance, on rame et on ne part pas, même si tout est bon sur le papier.
+function wavePower(height, period) {
+  if (height == null || period == null) return null;
+  return Math.round(0.49 * height * height * period * 10) / 10;
+}
+// Repères par niveau : en dessous de `floor` on rame ; à partir de `good` la houle a de quoi faire une grande session.
+// Le plafond vient de la taille maximale du surfeur, prise sur une houle de 12 s.
+const POWER_BY_LEVEL = {
+  beginner:     { floor: 3,  good: 5.5 },
+  intermediate: { floor: 6,  good: 11 },
+  advanced:     { floor: 8,  good: 15 },
+  expert:       { floor: 10, good: 18 },
+};
+function powerBand(profile) {
+  const base = POWER_BY_LEVEL[profile.surf_level] || POWER_BY_LEVEL.intermediate;
+  const max = wavePower(profile.max_wave_height || 2.0, 12);
+  return { floor: Math.min(base.floor, max * 0.5), good: Math.min(base.good, max * 0.7), max };
+}
+// Retourne le coefficient appliqué à la note, le plafond éventuel, et l'état lisible
+function judgePower(power, profile) {
+  if (power == null) return { gate: 1, cap: 10, state: 'unknown' };
+  const band = powerBand(profile);
+  if (power < band.floor) return { gate: 0.55 + 0.3 * (power / band.floor), cap: 6.4, state: 'weak', band };
+  if (power < band.good) return { gate: 1, cap: 8.4, state: 'fair', band };
+  if (power <= band.max) return { gate: 1, cap: 10, state: 'good', band };
+  return { gate: Math.max(0.4, band.max / power), cap: 7.4, state: 'strong', band };
+}
+
 // Rafales en km/h → coefficient appliqué à la note (1 = sans effet)
 function rafalesGate(gust) {
   if (gust == null || gust <= 25) return 1;
@@ -627,7 +657,14 @@ function scoreSlot(slot, context) {
   // Mer du vent : quand elle pèse lourd face à la houle, la mer est hachée même si la taille est bonne
   const chop = slot.windWaveHeight != null && slot.waveHeight ? slot.windWaveHeight / slot.waveHeight : 0;
   const chopGate = chop >= 0.6 ? 0.7 : chop >= 0.4 ? 0.85 : 1;
-  let cappedScore = rawScore * sizeGate * windGate * gustGate * chopGate;
+  // Puissance : trop molle on rame sans partir, trop forte ça dépasse le niveau
+  const power = wavePower(Math.max(slot.waveHeight || 0, slot.swellHeight || 0) || null, slot.peakPeriod || slot.swellPeriod || slot.wavePeriod);
+  const powerVerdict = judgePower(power, context.profile);
+  let cappedScore = rawScore * sizeGate * windGate * gustGate * chopGate * powerVerdict.gate;
+  cappedScore = Math.min(cappedScore, powerVerdict.cap);
+  // Le haut de l'échelle doit rester rare : au-delà de 9, il faut que le vent, la taille et la houle soient tous excellents
+  // (au-dessus de 8,9 la note est fortement tassée plutôt que coupée net, pour garder l'ordre entre deux bons créneaux)
+  if (!(windScore >= 9 && wavesScore >= 9 && periodScore >= 8.5) && cappedScore > 8.9) cappedScore = 8.9 + (cappedScore - 8.9) * 0.15;
 
   // Tempête : on ne recommande jamais, quoi que disent les autres critères
   const storm = (gust != null && gust >= 50) || ((slot.waveHeight || 0) >= 3.5 && (slot.windSpeed || 0) >= 30);
@@ -651,6 +688,10 @@ function scoreSlot(slot, context) {
   // Trouver la session similaire la plus proche pour la narrative
 
   const why = buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotScore, profile, spot, memory);
+  const kw = power != null ? String(power < 10 ? power : Math.round(power)).replace('.', ',') + ' kW/m' : '';
+  if (powerVerdict.state === 'weak') why.whyNotPerfect.push('Houle molle (' + kw + '), tu risques de ramer sans partir');
+  else if (powerVerdict.state === 'strong') why.whyNotPerfect.push('Houle très puissante (' + kw + ') pour ton niveau');
+  else if (powerVerdict.state === 'good') why.whyGood.push('Houle avec de la puissance (' + kw + ')');
 
   return {
     score,
@@ -676,6 +717,8 @@ function scoreSlot(slot, context) {
     memory,
     sizeIssue,
     storm,
+    wavePower: power,
+    powerState: powerVerdict.state,
     confidence: slot.confidence || 'single',
     waveRange,
     windTolerance,
@@ -683,4 +726,4 @@ function scoreSlot(slot, context) {
   };
 }
 
-module.exports = { rafalesGate, scoreSlot, learnWaveRange, learnWindTolerance, memoryReminder, computeWeights, degreesToCardinal, buildWhyGood, tideCategory, spotMemory, sessionSimilarity };
+module.exports = { rafalesGate, wavePower, judgePower, powerBand, scoreSlot, learnWaveRange, learnWindTolerance, memoryReminder, computeWeights, degreesToCardinal, buildWhyGood, tideCategory, spotMemory, sessionSimilarity };

@@ -5,14 +5,7 @@ const { scoreSlot, learnWaveRange, learnWindTolerance } = require('./scorer');
 const { spotTimeZone, localParts, sunTimes, isDaylightSlot } = require('./timeUtils');
 
 // Labels selon score
-// Puissance de la houle en kW par mètre de front d'onde (formule du large) :
-// P = ρ·g² / (64π) × H² × T ≈ 0,49 × H² × T. Repères : 2 m à 4 s ≈ 8 kW/m, 3 m à 6 s ≈ 27 kW/m,
-// moyenne annuelle du golfe de Gascogne ≈ 45 kW/m.
-// C'est ce que le surfeur ressent : 2 m à 7 s et 2 m à 14 s n'ont rien à voir.
-function wavePower(height, period) {
-  if (height == null || period == null) return null;
-  return Math.round(0.49 * height * height * period * 10) / 10;
-}
+const { wavePower } = require('./scorer');
 
 function scoreLabel(score, sizeIssue, storm) {
   if (storm) return 'Tempête';
@@ -318,6 +311,7 @@ function getBestWindows(context, maxWindows = 10) {
       scoreLabel: scoreLabel(s.score, s.sizeIssue, s.storm),
       sizeIssue: s.sizeIssue || null,
       storm: !!s.storm,
+      powerState: s.powerState || 'unknown',
       confidence: s.confidence || 'single',
       conditions: {
         waveHeight: s.conditions.waveHeight,
