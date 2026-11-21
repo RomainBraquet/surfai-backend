@@ -124,12 +124,29 @@ function mergePoint(p, o) {
   out.windWaveHeight = r1(o.windWaveHeight);
   out.precipitation = o.precipitation;
   if (out.airTemp == null && o.airTemp != null) out.airTemp = r1(o.airTemp);
+  if (out.waterTemp == null && o.waterTemp != null) out.waterTemp = r1(o.waterTemp);
   out.confidence = agreement(p, o);
   out.sources = { stormglass: { waveHeight: p.waveHeight, windSpeed: p.windSpeed, wavePeriod: p.wavePeriod },
                   openMeteo: { waveHeight: r1(o.waveHeight), windSpeed: r1(o.windSpeed), windGust: out.windGust } };
   return out;
 }
-// Quand Stormglass est indisponible (quota), l'app continue sur Open-Meteo seul, sans marées ni température d'eau.
+// Pleines et basses mers lues dans la courbe du niveau de la mer d'Open-Meteo (une valeur par heure).
+// Sert de secours quand Stormglass ne donne pas les marées : gratuit et mondial, précis à la demi-heure près.
+function tideExtremesFromSeaLevel(om) {
+  if (!om) return [];
+  const pts = [...om.entries()].filter(([, o]) => o.seaLevel != null).sort((a, b) => a[0] - b[0]).map(([ts, o]) => ({ ts, v: o.seaLevel }));
+  const out = [];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const a = pts[i - 1].v, b = pts[i].v, c = pts[i + 1].v;
+    const high = b > a && b >= c, low = b < a && b <= c;
+    if (!high && !low) continue;
+    // sommet de la parabole qui passe par les trois points : l'heure réelle de l'étale tombe entre deux relevés
+    const denom = a - 2 * b + c, shift = denom ? Math.max(-0.5, Math.min(0.5, 0.5 * (a - c) / denom)) : 0;
+    out.push({ timestamp: Math.round(pts[i].ts + shift * 3600), type: high ? 'high' : 'low', height: Math.round((b - 0.25 * (a - c) * shift) * 100) / 100 });
+  }
+  return out;
+}
+// Quand Stormglass est indisponible (quota), l'app continue sur Open-Meteo seul.
 function pointsFromOpenMeteo(om) {
   return [...om.entries()].sort((a, b) => a[0] - b[0]).filter(([, o]) => o.waveHeight != null).map(([ts, o]) => ({
     time: new Date(ts * 1000).toISOString(), timestamp: ts, hour: new Date(ts * 1000).getUTCHours(),
@@ -140,7 +157,7 @@ function pointsFromOpenMeteo(om) {
     swellHeight: r1(o.swellHeight), swellPeriod: o.swellPeriod != null ? Math.round(o.swellPeriod) : null,
     peakPeriod: peakPeriodOf(o.swellPeakPeriod, o.swellPeriod != null ? o.swellPeriod : o.wavePeriod),
     swellDirection: o.swellDirection != null ? Math.round(o.swellDirection) : null,
-    windWaveHeight: r1(o.windWaveHeight), precipitation: o.precipitation, airTemp: r1(o.airTemp), waterTemp: null,
+    windWaveHeight: r1(o.windWaveHeight), precipitation: o.precipitation, airTemp: r1(o.airTemp), waterTemp: o.waterTemp != null ? r1(o.waterTemp) : null,
     tidePhase: 'unknown', tideLevel: null, confidence: 'single', sources: { stormglass: false, openMeteo: true },
   }));
 }
@@ -156,17 +173,18 @@ async function buildContext(spot, userData, days = 5) {
   let forecast;
   if (sgResult.data) {
     forecast = sgResult.data.forecast.map(p => mergePoint(p, om ? om.get(p.timestamp) : null));
-    // Marées : pleines et basses mers, puis niveau et phase pour chaque heure
-    try {
-      const tideExtremes = await stormglassService.getTideExtremes(spot.lat, spot.lng, days);
-      if (tideExtremes.length > 0) forecast = forecast.map(point => ({ ...point, ...tideAt(point.timestamp, tideExtremes), tideExtremes }));
-    } catch (e) {
-      console.warn('⚠️ Stormglass tide indisponible:', e.message);
-    }
   } else {
     console.warn('⚠️ Stormglass indisponible, prévisions Open-Meteo seules :', sgResult.error.message);
     forecast = pointsFromOpenMeteo(om);
   }
+  // Marées : pleines et basses mers (Stormglass, sinon la courbe d'Open-Meteo), puis niveau et phase pour chaque heure
+  let tideExtremes = [];
+  if (sgResult.data) {
+    try { tideExtremes = await stormglassService.getTideExtremes(spot.lat, spot.lng, days); }
+    catch (e) { console.warn('⚠️ Stormglass tide indisponible:', e.message); }
+  }
+  if (!tideExtremes || tideExtremes.length < 2) tideExtremes = tideExtremesFromSeaLevel(om);
+  if (tideExtremes.length > 0) forecast = forecast.map(point => ({ ...point, ...tideAt(point.timestamp, tideExtremes), tideExtremes }));
 
   return { spot, forecast, ...userData, collectedAt: new Date().toISOString(), degraded: !sgResult.data };
 }
@@ -178,4 +196,4 @@ async function collectContext(spotId, userId, days = 5) {
   return buildContext(spot, userData, days);
 }
 
-module.exports = { collectContext, collectUserData, buildContext, tideAt, normalizeSession, mergePoint, agreement, countsForLearning };
+module.exports = { collectContext, collectUserData, buildContext, tideAt, normalizeSession, mergePoint, agreement, countsForLearning, tideExtremesFromSeaLevel };

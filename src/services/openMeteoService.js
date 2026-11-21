@@ -81,7 +81,7 @@ async function getHourly(lat, lng, days = 6) {
     const [marineRes, weatherRes] = await Promise.all([
         axios.get(MARINE_URL, { timeout: 9000, params: {
             latitude: lat, longitude: lng, timezone: 'GMT', forecast_days: n, cell_selection: 'sea',
-            hourly: 'wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,swell_wave_peak_period,swell_wave_direction,wind_wave_height',
+            hourly: 'wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,swell_wave_peak_period,swell_wave_direction,wind_wave_height,sea_level_height_msl,sea_surface_temperature',
         } }).catch(() => null),
         axios.get(WEATHER_URL, { timeout: 9000, params: {
             latitude: lat, longitude: lng, timezone: 'GMT', forecast_days: n,
@@ -106,6 +106,7 @@ async function getHourly(lat, lng, days = 6) {
             waveHeight: num(m.wave_height[k]), wavePeriod: num(m.wave_period[k]), waveDirection: num(m.wave_direction[k]),
             swellHeight: num(m.swell_wave_height[k]), swellPeriod: num(m.swell_wave_period[k]), swellPeakPeriod: num((m.swell_wave_peak_period || [])[k]), swellDirection: num(m.swell_wave_direction[k]),
             windWaveHeight: num(m.wind_wave_height[k]),
+            seaLevel: num((m.sea_level_height_msl || [])[k]), waterTemp: num((m.sea_surface_temperature || [])[k]),
         });
     });
     hourlyCache.set(key, { at: Date.now(), data: out });
