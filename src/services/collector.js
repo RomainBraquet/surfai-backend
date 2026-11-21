@@ -60,6 +60,14 @@ function normalizeSession(session) {
 }
 
 // Données du surfeur : chargées une seule fois, puis partagées entre tous les spots analysés
+// Le moteur n'apprend que des sessions enregistrées à partir de cette date.
+// Les sessions antérieures sont des exemples saisis pour travailler l'interface : elles restent visibles
+// dans l'historique mais ne doivent influencer aucune note.
+const LEARNING_START = process.env.LEARNING_START || '2026-11-21';
+function countsForLearning(session) {
+  return String(session.created_at || '').slice(0, 10) >= LEARNING_START;
+}
+
 async function collectUserData(userId) {
   const [profile, sessions, boards] = await Promise.all([
     db.getProfile(userId),
@@ -69,28 +77,90 @@ async function collectUserData(userId) {
   return {
     userId,
     profile: profile || { surf_level: 'intermediate', min_wave_height: 0.8, max_wave_height: 2.0 },
-    pastSessions: (sessions || []).map(normalizeSession),
+    pastSessions: (sessions || []).filter(countsForLearning).map(normalizeSession),
     boards: boards || [],
   };
 }
 
 // Contexte complet d'un spot : prévisions + marées + données du surfeur
-async function buildContext(spot, userData, days = 5) {
-  // Prévisions météo marine (partagées par maille de 25 km, en cache à la journée)
-  const weatherData = await stormglassService.getForecast(spot.lat, spot.lng, days);
+// Deux avis valent mieux qu'un. Stormglass donne les vagues, la houle, la température de l'eau et les marées ;
+// Open-Meteo donne un second avis sur les vagues et le vent, les rafales, et la mer du vent séparée de la houle.
+const r1 = v => (v == null ? null : Math.round(v * 10) / 10);
+function agreement(sg, om) {
+  if (!sg || !om) return 'single';
+  let level = 'high';
+  if (sg.waveHeight != null && om.waveHeight != null) {
+    const mean = (sg.waveHeight + om.waveHeight) / 2, gap = mean > 0 ? Math.abs(sg.waveHeight - om.waveHeight) / mean : 0;
+    if (gap > 0.4 && Math.abs(sg.waveHeight - om.waveHeight) > 0.5) level = 'low'; else if (gap > 0.25) level = 'medium';
+  }
+  if (sg.windSpeed != null && om.windSpeed != null) {
+    const gap = Math.abs(sg.windSpeed - om.windSpeed);
+    if (gap > 15) level = 'low'; else if (gap > 8 && level === 'high') level = 'medium';
+  }
+  return level;
+}
+function mergePoint(p, o) {
+  if (!o) return { ...p, confidence: 'single', sources: { stormglass: true, openMeteo: false } };
+  const out = { ...p };
+  // Vagues : la moyenne des deux avis
+  if (p.waveHeight != null && o.waveHeight != null) out.waveHeight = r1((p.waveHeight + o.waveHeight) / 2);
+  else if (p.waveHeight == null) out.waveHeight = r1(o.waveHeight);
+  // Vent : par prudence, le plus fort des deux, avec sa direction
+  if (o.windSpeed != null && (p.windSpeed == null || o.windSpeed >= p.windSpeed)) { out.windSpeed = r1(o.windSpeed); out.windDirection = o.windDirection != null ? Math.round(o.windDirection) : p.windDirection; }
+  out.windGust = o.windGust != null ? Math.round(o.windGust) : null;
+  // Houle principale et mer du vent
+  if (out.swellPeriod == null && o.swellPeriod != null) out.swellPeriod = Math.round(o.swellPeriod);
+  if (out.swellHeight == null && o.swellHeight != null) out.swellHeight = r1(o.swellHeight);
+  if (out.swellDirection == null && o.swellDirection != null) out.swellDirection = Math.round(o.swellDirection);
+  if (out.waveDirection == null && o.waveDirection != null) out.waveDirection = Math.round(o.waveDirection);
+  if (out.wavePeriod == null && o.wavePeriod != null) out.wavePeriod = Math.round(o.wavePeriod);
+  out.windWaveHeight = r1(o.windWaveHeight);
+  out.precipitation = o.precipitation;
+  if (out.airTemp == null && o.airTemp != null) out.airTemp = r1(o.airTemp);
+  out.confidence = agreement(p, o);
+  out.sources = { stormglass: { waveHeight: p.waveHeight, windSpeed: p.windSpeed, wavePeriod: p.wavePeriod },
+                  openMeteo: { waveHeight: r1(o.waveHeight), windSpeed: r1(o.windSpeed), windGust: out.windGust } };
+  return out;
+}
+// Quand Stormglass est indisponible (quota), l'app continue sur Open-Meteo seul, sans marées ni température d'eau.
+function pointsFromOpenMeteo(om) {
+  return [...om.entries()].sort((a, b) => a[0] - b[0]).filter(([, o]) => o.waveHeight != null).map(([ts, o]) => ({
+    time: new Date(ts * 1000).toISOString(), timestamp: ts, hour: new Date(ts * 1000).getUTCHours(),
+    waveHeight: r1(o.waveHeight), wavePeriod: o.wavePeriod != null ? Math.round(o.wavePeriod) : null,
+    waveDirection: o.waveDirection != null ? Math.round(o.waveDirection) : null,
+    windSpeed: r1(o.windSpeed), windDirection: o.windDirection != null ? Math.round(o.windDirection) : null,
+    windGust: o.windGust != null ? Math.round(o.windGust) : null,
+    swellHeight: r1(o.swellHeight), swellPeriod: o.swellPeriod != null ? Math.round(o.swellPeriod) : null,
+    swellDirection: o.swellDirection != null ? Math.round(o.swellDirection) : null,
+    windWaveHeight: r1(o.windWaveHeight), precipitation: o.precipitation, airTemp: r1(o.airTemp), waterTemp: null,
+    tidePhase: 'unknown', tideLevel: null, confidence: 'single', sources: { stormglass: false, openMeteo: true },
+  }));
+}
 
-  // Marées : pleines et basses mers, puis niveau et phase pour chaque heure
-  let forecast = weatherData.forecast;
-  try {
-    const tideExtremes = await stormglassService.getTideExtremes(spot.lat, spot.lng, days);
-    if (tideExtremes.length > 0) {
-      forecast = forecast.map(point => ({ ...point, ...tideAt(point.timestamp, tideExtremes), tideExtremes }));
+async function buildContext(spot, userData, days = 5) {
+  const openMeteo = require('./openMeteoService');
+  const [sgResult, om] = await Promise.all([
+    stormglassService.getForecast(spot.lat, spot.lng, days).then(data => ({ data })).catch(error => ({ error })),
+    openMeteo.getHourly(spot.lat, spot.lng, days).catch(() => null),
+  ]);
+  if (sgResult.error && !om) throw sgResult.error;
+
+  let forecast;
+  if (sgResult.data) {
+    forecast = sgResult.data.forecast.map(p => mergePoint(p, om ? om.get(p.timestamp) : null));
+    // Marées : pleines et basses mers, puis niveau et phase pour chaque heure
+    try {
+      const tideExtremes = await stormglassService.getTideExtremes(spot.lat, spot.lng, days);
+      if (tideExtremes.length > 0) forecast = forecast.map(point => ({ ...point, ...tideAt(point.timestamp, tideExtremes), tideExtremes }));
+    } catch (e) {
+      console.warn('⚠️ Stormglass tide indisponible:', e.message);
     }
-  } catch (e) {
-    console.warn('⚠️ Stormglass tide indisponible:', e.message);
+  } else {
+    console.warn('⚠️ Stormglass indisponible, prévisions Open-Meteo seules :', sgResult.error.message);
+    forecast = pointsFromOpenMeteo(om);
   }
 
-  return { spot, forecast, ...userData, collectedAt: new Date().toISOString() };
+  return { spot, forecast, ...userData, collectedAt: new Date().toISOString(), degraded: !sgResult.data };
 }
 
 async function collectContext(spotId, userId, days = 5) {
@@ -100,4 +170,4 @@ async function collectContext(spotId, userId, days = 5) {
   return buildContext(spot, userData, days);
 }
 
-module.exports = { collectContext, collectUserData, buildContext, tideAt, normalizeSession };
+module.exports = { collectContext, collectUserData, buildContext, tideAt, normalizeSession, mergePoint, agreement, countsForLearning };

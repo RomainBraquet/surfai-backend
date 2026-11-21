@@ -141,4 +141,26 @@ ok(learnWaveRange([mk(1.5, { rating: 5 }), mk(1.4, { rating: 4 }), mk(1.6, { rat
   const sc = score(sl); ok(typeof sc === 'number' && !Number.isNaN(sc) && sc >= 0 && sc <= 10, `score borné pour ${JSON.stringify(sl)}, obtenu ${sc}`);
 });
 
+// 9. Rafales, tempête, houle courte, désaccord des sources (leçon du 21/11/2026 : 8,6 un jour de tempête)
+const { mergePoint, agreement, countsForLearning } = require('../src/services/collector');
+ok(score({ ...perfect, windGust: 20 }) === score(perfect), 'des rafales faibles ne changent rien');
+ok(score({ ...perfect, windGust: 45 }) < 5, `rafales à 45 km/h : la note doit passer sous 5, obtenu ${score({ ...perfect, windGust: 45 })}`);
+[25, 35, 45, 55, 70].reduce((prev, g) => { const v = score({ ...perfect, windGust: g }); ok(v <= prev, `rafales ${g} km/h ne doivent pas remonter la note`); return v; }, 10);
+ok(scoreSlot({ ...perfect, windGust: 55 }, ctx).storm === true && score({ ...perfect, windGust: 55 }) <= 2.5, 'rafales à 55 km/h = tempête, jamais recommandée');
+ok(scoreSlot({ ...perfect, waveHeight: 3.8, swellHeight: 3.6, windSpeed: 35 }, ctx).storm === true, 'grosse mer et vent fort = tempête');
+ok(score({ ...perfect, swellPeriod: 8, wavePeriod: 8 }) <= 7.9, 'houle de 8 s : jamais exceptionnel');
+ok(score({ ...perfect, swellPeriod: 6, wavePeriod: 6 }) <= 6.4, 'houle de 6 s : plafonnée');
+ok(score({ ...perfect, confidence: 'low' }) <= 6.9, 'sources en désaccord : pas de note exceptionnelle');
+ok(score({ ...perfect, windWaveHeight: 1.0 }) < score(perfect), 'une forte mer du vent fait baisser la note');
+ok(scoreSlot({ ...perfect, windGust: 45 }, ctx).whyNotPerfect.some(t => /Rafales/.test(t)), 'les rafales sont dites à l\'utilisateur');
+const merged = mergePoint({ waveHeight: 2.4, windSpeed: 14.5, windDirection: 112, wavePeriod: 8 }, { waveHeight: 1.8, windSpeed: 23, windGust: 44, windDirection: 178, swellPeriod: 10 });
+ok(merged.windSpeed === 23 && merged.windDirection === 178 && merged.windGust === 44, 'vent : on retient le plus fort des deux avis, avec ses rafales');
+ok(merged.waveHeight === 2.1, 'vagues : moyenne des deux avis');
+ok(agreement({ waveHeight: 2.4, windSpeed: 5 }, { waveHeight: 1.0, windSpeed: 25 }) === 'low', 'gros écart entre les sources = confiance basse');
+ok(agreement({ waveHeight: 1.5, windSpeed: 10 }, { waveHeight: 1.4, windSpeed: 12 }) === 'high', 'sources proches = confiance haute');
+ok(mergePoint({ waveHeight: 1.5, windSpeed: 10 }, null).confidence === 'single', 'une seule source : on le sait');
+// Les sessions d'exemple (antérieures au 21/11/2026) ne nourrissent pas le moteur
+ok(countsForLearning({ created_at: '2026-05-10T10:00:00Z' }) === false, 'session d\'exemple ignorée');
+ok(countsForLearning({ created_at: '2026-11-22T10:00:00Z' }) === true, 'vraie session prise en compte');
+
 console.log(`✅ ${n} vérifications du moteur passent`);

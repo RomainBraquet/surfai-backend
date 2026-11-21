@@ -370,6 +370,14 @@ function degreesToCardinal(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
+// Rafales en km/h → coefficient appliqué à la note (1 = sans effet)
+function rafalesGate(gust) {
+  if (gust == null || gust <= 25) return 1;
+  if (gust <= 40) return 1 - (gust - 25) / 15 * 0.55;      // 25 → 1 ; 40 → 0,45
+  if (gust <= 55) return 0.45 - (gust - 40) / 15 * 0.23;   // 40 → 0,45 ; 55 → 0,22
+  return 0.2;
+}
+
 // ─── Explications lisibles ────────────────────────────────
 function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotScore, profile, spot, memory) {
   const reasons = [];   // pourquoi c'est bien
@@ -377,7 +385,10 @@ function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotSco
 
   // --- Vent ---
   const speedKmh = slot.windSpeed || 0;
-  if (windScore >= 9) {
+  const gust = slot.windGust || 0;
+  if (gust >= 30) {
+    caveats.push('Rafales à ' + Math.round(gust) + ' km/h' + (gust >= 45 ? ', plan d\'eau soufflé' : ', vent irrégulier'));
+  } else if (windScore >= 9) {
     if (speedKmh <= 8) reasons.push('Conditions glassy, quasi pas de vent');
     else reasons.push('Vent léger de terre (' + Math.round(speedKmh) + ' km/h), vagues propres');
   } else if (windScore >= 7) {
@@ -425,6 +436,9 @@ function buildWhyGood(slot, windScore, wavesScore, periodScore, tideAdj, spotSco
   } else if (tideLabel && tideAdj <= -1.0) {
     caveats.push(tideLabel + ', pas idéale pour ce spot');
   }
+
+  if (slot.windWaveHeight != null && slot.waveHeight && slot.windWaveHeight / slot.waveHeight >= 0.4) caveats.push('Mer hachée par le vent');
+  if (slot.confidence === 'low') caveats.push('Les prévisions ne sont pas d\'accord entre elles, à confirmer');
 
   // --- Mémoire du spot : on rappelle un vécu, pas une date ---
   const reminder = memoryReminder(memory);
@@ -581,7 +595,8 @@ function scoreSlot(slot, context) {
   const windTolerance = context.windTolerance || learnWindTolerance(pastSessions, context.profile);
   const windScore    = scoreWind(slot.windSpeed, slot.windDirection, spot.ideal_wind, slot.waveDirection, windTolerance.scale);
   const wavesScore   = scoreWaves(slot.waveHeight, slot.swellHeight, profile);
-  const periodScore  = scorePeriod(slot.wavePeriod);
+  // La période qui compte est celle de la houle principale, pas la moyenne brouillée par la mer du vent
+  const periodScore  = scorePeriod(slot.swellPeriod || slot.wavePeriod);
   const spotScore    = scoreSpot(slot, spot);
   const tideAdj      = tideBonus(slot, spot.ideal_tide);
 
@@ -606,7 +621,23 @@ function scoreSlot(slot, context) {
   //   vent correct (score >= 4) → ×1 ; vent destructeur (score 0) → ×0.5
   const sizeGate = 0.2 + 0.8 * Math.min(1, wavesScore / 6);
   const windGate = 0.5 + 0.5 * Math.min(1, windScore / 4);
-  const cappedScore = rawScore * sizeGate * windGate;
+  // Rafales : un vent moyen correct ne dit rien d'un plan d'eau soufflé par à-coups
+  const gust = slot.windGust;
+  const gustGate = rafalesGate(gust);
+  // Mer du vent : quand elle pèse lourd face à la houle, la mer est hachée même si la taille est bonne
+  const chop = slot.windWaveHeight != null && slot.waveHeight ? slot.windWaveHeight / slot.waveHeight : 0;
+  const chopGate = chop >= 0.6 ? 0.7 : chop >= 0.4 ? 0.85 : 1;
+  let cappedScore = rawScore * sizeGate * windGate * gustGate * chopGate;
+
+  // Tempête : on ne recommande jamais, quoi que disent les autres critères
+  const storm = (gust != null && gust >= 50) || ((slot.waveHeight || 0) >= 3.5 && (slot.windSpeed || 0) >= 30);
+  if (storm) cappedScore = Math.min(cappedScore, 2.5);
+  // Une houle courte ne fait jamais une session exceptionnelle, même propre et à la bonne taille
+  const swellPeriod = slot.swellPeriod || slot.wavePeriod;
+  if (swellPeriod != null && swellPeriod < 7) cappedScore = Math.min(cappedScore, 6.4);
+  else if (swellPeriod != null && swellPeriod < 9) cappedScore = Math.min(cappedScore, 7.9);
+  // Quand les deux sources se contredisent, on ne promet pas une session exceptionnelle
+  if (slot.confidence === 'low') cappedScore = Math.min(cappedScore, 6.9);
 
   const score = Math.round(Math.min(10, Math.max(0, cappedScore)) * 10) / 10;
 
@@ -644,10 +675,12 @@ function scoreSlot(slot, context) {
     similarSession,
     memory,
     sizeIssue,
+    storm,
+    confidence: slot.confidence || 'single',
     waveRange,
     windTolerance,
     calibrationLevel: waveRange.confidence,
   };
 }
 
-module.exports = { scoreSlot, learnWaveRange, learnWindTolerance, memoryReminder, computeWeights, degreesToCardinal, buildWhyGood, tideCategory, spotMemory, sessionSimilarity };
+module.exports = { rafalesGate, scoreSlot, learnWaveRange, learnWindTolerance, memoryReminder, computeWeights, degreesToCardinal, buildWhyGood, tideCategory, spotMemory, sessionSimilarity };

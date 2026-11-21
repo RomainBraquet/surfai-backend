@@ -5,7 +5,8 @@ const { scoreSlot, learnWaveRange, learnWindTolerance } = require('./scorer');
 const { spotTimeZone, localParts, sunTimes, isDaylightSlot } = require('./timeUtils');
 
 // Labels selon score
-function scoreLabel(score, sizeIssue) {
+function scoreLabel(score, sizeIssue, storm) {
+  if (storm) return 'Tempête';
   if (score < 4 && sizeIssue === 'too_big') return 'Trop gros';
   if (score < 4 && sizeIssue === 'too_small') return 'Trop petit';
   if (score >= 8.5) return 'Exceptionnel';
@@ -264,7 +265,7 @@ function getBestWindows(context, maxWindows = 10) {
         timeWindow,
         peakHour: `${peakHour}h`,
         score: best.score,
-        scoreLabel: scoreLabel(best.score, best.sizeIssue),
+        scoreLabel: scoreLabel(best.score, best.sizeIssue, best.storm),
         tideCoeff,
         conditions: {
           waveHeight: best.conditions.waveHeight,
@@ -275,12 +276,16 @@ function getBestWindows(context, maxWindows = 10) {
           tideLevel: best.conditions.tideLevel,
           waveDirection: best.conditions.waveDirection,
           swellDirection: best.conditions.swellDirection,
+          swellPeriod: best.conditions.swellPeriod,
+          windGust: best.conditions.windGust,
+          windWaveHeight: best.conditions.windWaveHeight,
           swellHeight: best.conditions.swellHeight,
           waterTemp: best.conditions.waterTemp,
           airTemp: best.conditions.airTemp,
         },
         factors: best.factors,
         reminder: best.reminder || null,
+        confidence: best.confidence || 'single',
         whyGood: best.whyGood,
         whyNotPerfect: best.whyNotPerfect,
         boardSuggestion: best.boardSuggestion,
@@ -299,8 +304,10 @@ function getBestWindows(context, maxWindows = 10) {
       hour: s.localHour,
       date: s.localDate,
       score: s.score,
-      scoreLabel: scoreLabel(s.score, s.sizeIssue),
+      scoreLabel: scoreLabel(s.score, s.sizeIssue, s.storm),
       sizeIssue: s.sizeIssue || null,
+      storm: !!s.storm,
+      confidence: s.confidence || 'single',
       conditions: {
         waveHeight: s.conditions.waveHeight,
         windSpeed: s.conditions.windSpeed,
@@ -310,6 +317,10 @@ function getBestWindows(context, maxWindows = 10) {
         tideLevel: s.conditions.tideLevel,
         waveDirection: s.conditions.waveDirection,
         swellDirection: s.conditions.swellDirection,
+        swellPeriod: s.conditions.swellPeriod,
+        windGust: s.conditions.windGust,
+        windWaveHeight: s.conditions.windWaveHeight,
+        precipitation: s.conditions.precipitation,
         waterTemp: s.conditions.waterTemp,
         airTemp: s.conditions.airTemp,
       },
