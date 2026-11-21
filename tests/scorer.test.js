@@ -163,4 +163,12 @@ ok(mergePoint({ waveHeight: 1.5, windSpeed: 10 }, null).confidence === 'single',
 ok(countsForLearning({ created_at: '2026-05-10T10:00:00Z' }) === false, 'session d\'exemple ignorée');
 ok(countsForLearning({ created_at: '2026-11-22T10:00:00Z' }) === true, 'vraie session prise en compte');
 
+// 10. Puissance de la houle (kW/m)
+const { wavePower } = require('../src/services/recommender');
+ok(Math.abs(wavePower(2, 4) - 8) < 0.5, `2 m à 4 s ≈ 8 kW/m, obtenu ${wavePower(2, 4)}`);
+ok(Math.abs(wavePower(3, 6) - 27) < 1, `3 m à 6 s ≈ 27 kW/m, obtenu ${wavePower(3, 6)}`);
+ok(Math.abs(wavePower(1.4, 11) - 10.6) < 0.3, `1,4 m à 11 s ≈ 10,6 kW/m, obtenu ${wavePower(1.4, 11)}`);
+ok(wavePower(2, 14) > wavePower(2, 7) * 1.9, 'à taille égale, une houle deux fois plus longue est deux fois plus puissante');
+ok(wavePower(null, 11) === null, 'sans hauteur, pas de puissance');
+
 console.log(`✅ ${n} vérifications du moteur passent`);

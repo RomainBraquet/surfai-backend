@@ -5,6 +5,15 @@ const { scoreSlot, learnWaveRange, learnWindTolerance } = require('./scorer');
 const { spotTimeZone, localParts, sunTimes, isDaylightSlot } = require('./timeUtils');
 
 // Labels selon score
+// Puissance de la houle en kW par mètre de front d'onde (formule du large) :
+// P = ρ·g² / (64π) × H² × T ≈ 0,49 × H² × T. Repères : 2 m à 4 s ≈ 8 kW/m, 3 m à 6 s ≈ 27 kW/m,
+// moyenne annuelle du golfe de Gascogne ≈ 45 kW/m.
+// C'est ce que le surfeur ressent : 2 m à 7 s et 2 m à 14 s n'ont rien à voir.
+function wavePower(height, period) {
+  if (height == null || period == null) return null;
+  return Math.round(0.49 * height * height * period * 10) / 10;
+}
+
 function scoreLabel(score, sizeIssue, storm) {
   if (storm) return 'Tempête';
   if (score < 4 && sizeIssue === 'too_big') return 'Trop gros';
@@ -278,6 +287,7 @@ function getBestWindows(context, maxWindows = 10) {
           swellDirection: best.conditions.swellDirection,
           swellPeriod: best.conditions.swellPeriod,
           peakPeriod: best.conditions.peakPeriod,
+          wavePower: wavePower(best.conditions.waveHeight, best.conditions.peakPeriod || best.conditions.wavePeriod),
           windGust: best.conditions.windGust,
           windWaveHeight: best.conditions.windWaveHeight,
           swellHeight: best.conditions.swellHeight,
@@ -320,6 +330,7 @@ function getBestWindows(context, maxWindows = 10) {
         swellDirection: s.conditions.swellDirection,
         swellPeriod: s.conditions.swellPeriod,
         peakPeriod: s.conditions.peakPeriod,
+        wavePower: wavePower(s.conditions.waveHeight, s.conditions.peakPeriod || s.conditions.wavePeriod),
         windGust: s.conditions.windGust,
         windWaveHeight: s.conditions.windWaveHeight,
         precipitation: s.conditions.precipitation,
@@ -341,4 +352,4 @@ function getBestWindows(context, maxWindows = 10) {
   };
 }
 
-module.exports = { getBestWindows };
+module.exports = { getBestWindows, wavePower };
