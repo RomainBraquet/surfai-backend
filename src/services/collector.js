@@ -86,6 +86,12 @@ async function collectUserData(userId) {
 // Deux avis valent mieux qu'un. Stormglass donne les vagues, la houle, la température de l'eau et les marées ;
 // Open-Meteo donne un second avis sur les vagues et le vent, les rafales, et la mer du vent séparée de la houle.
 const r1 = v => (v == null ? null : Math.round(v * 10) / 10);
+// La période que les surfeurs lisent partout (Surfline, Y a du surf…) est la période de pic de la houle.
+// Les fournisseurs donnent souvent une période moyenne, plus courte d'environ 30 %. On ramène tout au pic.
+function peakPeriodOf(peak, mean) {
+  if (peak != null) return Math.round(peak);
+  return mean != null ? Math.round(mean * 1.3) : null;
+}
 function agreement(sg, om) {
   if (!sg || !om) return 'single';
   let level = 'high';
@@ -100,7 +106,7 @@ function agreement(sg, om) {
   return level;
 }
 function mergePoint(p, o) {
-  if (!o) return { ...p, confidence: 'single', sources: { stormglass: true, openMeteo: false } };
+  if (!o) return { ...p, peakPeriod: peakPeriodOf(null, p.swellPeriod != null ? p.swellPeriod : p.wavePeriod), confidence: 'single', sources: { stormglass: true, openMeteo: false } };
   const out = { ...p };
   // Vagues : la moyenne des deux avis
   if (p.waveHeight != null && o.waveHeight != null) out.waveHeight = r1((p.waveHeight + o.waveHeight) / 2);
@@ -114,6 +120,7 @@ function mergePoint(p, o) {
   if (out.swellDirection == null && o.swellDirection != null) out.swellDirection = Math.round(o.swellDirection);
   if (out.waveDirection == null && o.waveDirection != null) out.waveDirection = Math.round(o.waveDirection);
   if (out.wavePeriod == null && o.wavePeriod != null) out.wavePeriod = Math.round(o.wavePeriod);
+  out.peakPeriod = peakPeriodOf(o.swellPeakPeriod, o.swellPeriod != null ? o.swellPeriod : (p.swellPeriod != null ? p.swellPeriod : p.wavePeriod));
   out.windWaveHeight = r1(o.windWaveHeight);
   out.precipitation = o.precipitation;
   if (out.airTemp == null && o.airTemp != null) out.airTemp = r1(o.airTemp);
@@ -131,6 +138,7 @@ function pointsFromOpenMeteo(om) {
     windSpeed: r1(o.windSpeed), windDirection: o.windDirection != null ? Math.round(o.windDirection) : null,
     windGust: o.windGust != null ? Math.round(o.windGust) : null,
     swellHeight: r1(o.swellHeight), swellPeriod: o.swellPeriod != null ? Math.round(o.swellPeriod) : null,
+    peakPeriod: peakPeriodOf(o.swellPeakPeriod, o.swellPeriod != null ? o.swellPeriod : o.wavePeriod),
     swellDirection: o.swellDirection != null ? Math.round(o.swellDirection) : null,
     windWaveHeight: r1(o.windWaveHeight), precipitation: o.precipitation, airTemp: r1(o.airTemp), waterTemp: null,
     tidePhase: 'unknown', tideLevel: null, confidence: 'single', sources: { stormglass: false, openMeteo: true },

@@ -596,7 +596,7 @@ function scoreSlot(slot, context) {
   const windScore    = scoreWind(slot.windSpeed, slot.windDirection, spot.ideal_wind, slot.waveDirection, windTolerance.scale);
   const wavesScore   = scoreWaves(slot.waveHeight, slot.swellHeight, profile);
   // La période qui compte est celle de la houle principale, pas la moyenne brouillée par la mer du vent
-  const periodScore  = scorePeriod(slot.swellPeriod || slot.wavePeriod);
+  const periodScore  = scorePeriod(slot.peakPeriod || slot.swellPeriod || slot.wavePeriod);
   const spotScore    = scoreSpot(slot, spot);
   const tideAdj      = tideBonus(slot, spot.ideal_tide);
 
@@ -633,7 +633,7 @@ function scoreSlot(slot, context) {
   const storm = (gust != null && gust >= 50) || ((slot.waveHeight || 0) >= 3.5 && (slot.windSpeed || 0) >= 30);
   if (storm) cappedScore = Math.min(cappedScore, 2.5);
   // Une houle courte ne fait jamais une session exceptionnelle, même propre et à la bonne taille
-  const swellPeriod = slot.swellPeriod || slot.wavePeriod;
+  const swellPeriod = slot.peakPeriod || slot.swellPeriod || slot.wavePeriod;
   if (swellPeriod != null && swellPeriod < 7) cappedScore = Math.min(cappedScore, 6.4);
   else if (swellPeriod != null && swellPeriod < 9) cappedScore = Math.min(cappedScore, 7.9);
   // Quand les deux sources se contredisent, on ne promet pas une session exceptionnelle
